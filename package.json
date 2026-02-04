@@ -1,6 +1,6 @@
 {
   "name": "@sinclair/typebox",
-  "version": "0.27.9",
+  "version": "0.27.10",
   "description": "JSONSchema Type Builder with Static Type Resolution for TypeScript",
   "keywords": [
     "typescript",
@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@sinclair/hammer": "^0.17.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260203.1",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.19.130",
@@ -43,9 +44,6 @@
     "chai": "^4.3.6",
     "mocha": "^9.2.2",
     "prettier": "^2.7.1",
-    "typescript": "^5.0.2"
-  },
-  "dependencies": {
-    "@typescript/native-preview": "^7.0.0-dev.20260203.1"
+    "typescript": "5.0.2"
   }
 }
