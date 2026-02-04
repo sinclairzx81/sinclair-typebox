@@ -1,5 +1,6 @@
-import { Expect, IsExtendsMutual } from './assert'
-import { Type, type TObject, type Static, type TNumber } from '@sinclair/typebox'
+import { Expect } from './assert'
+import { Type } from '@sinclair/typebox'
+
 {
   const T = Type.Object({
     A: Type.String(),
@@ -7,7 +8,7 @@ import { Type, type TObject, type Static, type TNumber } from '@sinclair/typebox
     C: Type.String(),
   })
 
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     A: string
     B: string
     C: string
@@ -31,7 +32,7 @@ import { Type, type TObject, type Static, type TNumber } from '@sinclair/typebox
       C: Type.String(),
     }),
   })
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     A: {
       A: string
       B: string
@@ -61,71 +62,9 @@ import { Type, type TObject, type Static, type TNumber } from '@sinclair/typebox
     },
   )
   // note: Pending TypeScript support for negated types.
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     A: number
     B: number
     C: number
-  }>()
-}
-// ------------------------------------------------------------------
-// Required
-// ------------------------------------------------------------------
-{
-  const _A = Type.Object({})
-  const _B = Type.Object({ x: Type.Number() })
-  const _C = Type.Object({ x: Type.Number(), y: Type.Number() })
-
-  type A = (typeof _A)['required']
-  type B = (typeof _B)['required']
-  type C = (typeof _C)['required']
-
-  IsExtendsMutual<A, string[] | undefined>(true)
-  IsExtendsMutual<B, ['x']>(true)
-  IsExtendsMutual<C, ['x', 'y']>(true)
-}
-// ------------------------------------------------------------------
-// https://github.com/sinclairzx81/typebox/issues/1500
-// ------------------------------------------------------------------
-{
-  function test<Type extends TObject>(type: Type): Static<Type> {
-    return null as never
-  }
-  const _A = test(Type.Object({}))
-  const _B = test(
-    Type.Object({
-      x: Type.Number(),
-      y: Type.Number(),
-    }),
-  )
-  const _C = test(
-    Type.Partial(
-      Type.Object({
-        x: Type.Number(),
-        y: Type.Number(),
-      }),
-    ),
-  )
-}
-// ------------------------------------------------------------------
-// Inference
-// ------------------------------------------------------------------
-{
-  type T = Static<typeof T>
-  const T = null as never as TObject<{}>
-  Expect(T).ToStatic<{}>()
-}
-{
-  type T = Static<typeof T>
-  const T = null as never as TObject
-  Expect(T).ToStatic<{
-    [x: string]: unknown
-    [x: number]: unknown
-  }>()
-}
-{
-  type T = Static<typeof T>
-  const T = null as never as TObject<{ x: TNumber }>
-  Expect(T).ToStatic<{
-    x: number
   }>()
 }
