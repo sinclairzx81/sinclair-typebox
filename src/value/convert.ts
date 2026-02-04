@@ -131,7 +131,7 @@ export namespace ValueConvert {
     return IsStringNumeric(value) ? globalThis.BigInt(parseInt(value)) : IsNumber(value) ? globalThis.BigInt(value | 0) : IsValueFalse(value) ? 0 : IsValueTrue(value) ? 1 : value
   }
   function TryConvertString(value: unknown) {
-    return IsValueToString(value) ? value.toString() : IsSymbol(value) && value.description !== undefined ? value.description.toString() : value
+    return IsValueToString(value) ? value.toString() : value
   }
   function TryConvertNumber(value: unknown) {
     return IsStringNumeric(value) ? parseFloat(value) : IsValueTrue(value) ? 1 : IsValueFalse(value) ? 0 : value

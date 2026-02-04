@@ -236,7 +236,7 @@ export type TExtends<L extends TSchema, R extends TSchema, T extends TSchema, U 
 // --------------------------------------------------------------------------
 // TExclude
 // --------------------------------------------------------------------------
-export type TExcludeTemplateLiteralResult<T extends string> = TUnionResult<Assert<UnionToTuple<{ [K in T]: TLiteral<K> }[T]>, TSchema[]>>
+export type TExcludeTemplateLiteralResult<T extends string> = TString // TS7: TUnionResult<Assert<UnionToTuple<{ [K in T]: TLiteral<K> }[T]>, TSchema[]>>
 export type TExcludeTemplateLiteral<T extends TTemplateLiteral, U extends TSchema> = Exclude<Static<T>, Static<U>> extends infer S ? TExcludeTemplateLiteralResult<Assert<S, string>> : never
 // prettier-ignore
 export type TExcludeArray<T extends TSchema[], U extends TSchema> = Assert<UnionToTuple<{
@@ -250,7 +250,7 @@ export type TExclude<T extends TSchema, U extends TSchema> =
 // --------------------------------------------------------------------------
 // TExtract
 // --------------------------------------------------------------------------
-export type TExtractTemplateLiteralResult<T extends string> = TUnionResult<Assert<UnionToTuple<{ [K in T]: TLiteral<K> }[T]>, TSchema[]>>
+export type TExtractTemplateLiteralResult<T extends string> = TString // TS7: TUnionResult<Assert<UnionToTuple<{ [K in T]: TLiteral<K> }[T]>, TSchema[]>>
 export type TExtractTemplateLiteral<T extends TTemplateLiteral, U extends TSchema> = Extract<Static<T>, Static<U>> extends infer S ? TExtractTemplateLiteralResult<Assert<S, string>> : never
 // prettier-ignore
 export type TExtractArray<T extends TSchema[], U extends TSchema> = Assert<UnionToTuple<
@@ -640,7 +640,9 @@ export type TUnionResult<T extends TSchema[]> = T extends [] ? TNever : T extend
 // TUnion
 // --------------------------------------------------------------------------
 // prettier-ignore
-export type TUnionTemplateLiteral<T extends TTemplateLiteral, S extends string = Static<T>> = Ensure<TUnionResult<Assert<UnionToTuple<{[K in S]: TLiteral<K>}[S]>,TLiteral[]>>>
+export type TUnionTemplateLiteral<T extends TTemplateLiteral, S extends string = Static<T>> = (
+  string // Ensure<TUnionResult<Assert<UnionToTuple<{[K in S]: TLiteral<K>}[S]>,TLiteral[]>>>
+)
 export interface TUnion<T extends TSchema[] = TSchema[]> extends TSchema {
   [Kind]: 'Union'
   static: { [K in keyof T]: T[K] extends TSchema ? Static<T[K], this['params']> : never }[number]
@@ -2221,7 +2223,7 @@ export class StandardTypeBuilder extends TypeBuilder {
   }
   /** `[Standard]` Excludes from the left type any type that is not assignable to the right */
   public Exclude<L extends TSchema, R extends TSchema>(left: L, right: R, options: SchemaOptions = {}): TExclude<L, R> {
-    if (TypeGuard.TTemplateLiteral(left)) return this.Exclude(TemplateLiteralResolver.Resolve(left), right, options) as TExclude<L, R>
+    if (TypeGuard.TTemplateLiteral(left)) return this.Exclude(TemplateLiteralResolver.Resolve(left), right, options) as never
     if (TypeGuard.TTemplateLiteral(right)) return this.Exclude(left, TemplateLiteralResolver.Resolve(right), options) as any as TExclude<L, R>
     if (TypeGuard.TUnion(left)) {
       const narrowed = left.anyOf.filter((inner) => TypeExtends.Extends(inner, right) === TypeExtendsResult.False)
@@ -2232,7 +2234,7 @@ export class StandardTypeBuilder extends TypeBuilder {
   }
   /** `[Standard]` Extracts from the left type any type that is assignable to the right */
   public Extract<L extends TSchema, R extends TSchema>(left: L, right: R, options: SchemaOptions = {}): TExtract<L, R> {
-    if (TypeGuard.TTemplateLiteral(left)) return this.Extract(TemplateLiteralResolver.Resolve(left), right, options) as TExtract<L, R>
+    if (TypeGuard.TTemplateLiteral(left)) return this.Extract(TemplateLiteralResolver.Resolve(left), right, options) as never
     if (TypeGuard.TTemplateLiteral(right)) return this.Extract(left, TemplateLiteralResolver.Resolve(right), options) as any as TExtract<L, R>
     if (TypeGuard.TUnion(left)) {
       const narrowed = left.anyOf.filter((inner) => TypeExtends.Extends(inner, right) !== TypeExtendsResult.False)
