@@ -52,12 +52,30 @@ export async function build(target = 'target/build') {
     await folder(target).add('license')
     await shell(`cd ${target} && npm pack`)
 }
+// -------------------------------------------------------------------------------
+// Build-Native
+// -------------------------------------------------------------------------------
+export async function build_native(target = 'target/build') {
+    await test()
+    await folder(target).delete()
+    await shell(`tsgo -p ./src/tsconfig.json --outDir ${target}`)
+    await folder(target).add('package.json')
+    await folder(target).add('readme.md')
+    await folder(target).add('license')
+    await shell(`cd ${target} && npm pack`)
+}
 // -------------------------------------------------------------
 // Publish
 // -------------------------------------------------------------
-export async function publish(otp, target = 'target/build') {
-    const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
-    await shell(`cd ${target} && npm publish sinclair-typebox-${version}.tgz --access=public --otp ${otp}`)
+// export async function publish(otp, target = 'target/build') {
+//     const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+//     await shell(`cd ${target} && npm publish sinclair-typebox-${version}.tgz --access=public --otp ${otp}`)
+//     await shell(`git tag ${version}`)
+//     await shell(`git push origin ${version}`)
+// }
+export async function publish(target = 'target/build') {
+    const { version } = JSON.parse(readFileSync('./target/build/package.json', 'utf8'))
+    console.log('publishing', { version })
     await shell(`git tag ${version}`)
     await shell(`git push origin ${version}`)
 }

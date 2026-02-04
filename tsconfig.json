@@ -5,22 +5,21 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "declaration": true,
-    "baseUrl": ".",
     "paths": {
       "@sinclair/typebox/compiler": [
-        "src/compiler/index.ts"
+        "./src/compiler/index.ts"
       ],
       "@sinclair/typebox/errors": [
-        "src/errors/index.ts"
+        "./src/errors/index.ts"
       ],
       "@sinclair/typebox/system": [
-        "src/system/index.ts"
+        "./src/system/index.ts"
       ],
       "@sinclair/typebox/value": [
-        "src/value/index.ts"
+        "./src/value/index.ts"
       ],
       "@sinclair/typebox": [
-        "src/typebox.ts"
+        "./src/typebox.ts"
       ],
     }
   }

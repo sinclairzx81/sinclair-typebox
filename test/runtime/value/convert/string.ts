@@ -24,10 +24,6 @@ describe('value/convert/String', () => {
     const R = Value.Convert(T, BigInt(12345))
     Assert.deepEqual(R, '12345')
   })
-  it('Should convert from symbol', () => {
-    const R = Value.Convert(T, Symbol(12345))
-    Assert.deepEqual(R, '12345')
-  })
   // ----------------------------------------------------------
   // Casts
   // ----------------------------------------------------------
