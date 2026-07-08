@@ -38,7 +38,7 @@ import { type TInteger } from '../integer/index'
 import { type TLiteral, type TLiteralValue } from '../literal/index'
 import { type TNever, Never } from '../never/index'
 import { type TNumber, Number } from '../number/index'
-import { type TObject, type TProperties, type TAdditionalProperties, type ObjectOptions, Object } from '../object/index'
+import { type TObject, type TProperties, type TAdditionalProperties, type ObjectOptions, Object as _Object_ } from '../object/index'
 import { type TRegExp } from '../regexp/index'
 import { type TString, String } from '../string/index'
 import { type TUnion, Union } from '../union/index'
@@ -70,7 +70,7 @@ function RecordCreateFromPattern(pattern: string, T: TSchema, options: ObjectOpt
 function RecordCreateFromKeys(K: string[], T: TSchema, options: ObjectOptions): TObject<TProperties> {
   const result = {} as TProperties
   for(const K2 of K) result[K2] = T
-  return Object(result, { ...options, [Hint]: 'Record' })
+  return _Object_(result, { ...options, [Hint]: 'Record' })
 }
 // ------------------------------------------------------------------
 // FromTemplateLiteralKey (Fast Inference)
@@ -185,7 +185,7 @@ type TFromBooleanKey<_Key extends TBoolean, Type extends TSchema> = (
 )
 // prettier-ignore
 function FromBooleanKey<Key extends TBoolean, Type extends TSchema>(_key: Key, type: Type, options: ObjectOptions): TFromBooleanKey<Key, Type> {
-  return Object({ true: type, false: type }, options)
+  return _Object_({ true: type, false: type }, options)
 }
 // ------------------------------------------------------------------
 // FromIntegerKey

@@ -42,7 +42,7 @@ import { Function as FunctionType, type TFunction } from '../function/index'
 import { Intersect, type TIntersect, type TIntersectEvaluated } from '../intersect/index'
 import { Iterator, type TIterator } from '../iterator/index'
 import { KeyOf, type TKeyOf } from '../keyof/index'
-import { Object, type TObject, type TProperties } from '../object/index'
+import { Object as _Object_, type TObject, type TProperties } from '../object/index'
 import { Omit, type TOmit } from '../omit/index'
 import { type TOptional } from '../optional/index'
 import { Pick, type TPick } from '../pick/index'
@@ -319,7 +319,7 @@ type TFromObject<ModuleProperties extends TProperties, Properties extends TPrope
   [Key in keyof Properties]: TFromType<ModuleProperties, Properties[Key]>
 }>>>
 function FromObject<ModuleProperties extends TProperties, Properties extends TProperties>(moduleProperties: ModuleProperties, properties: Properties): TFromObject<ModuleProperties, Properties> {
-  return Object(
+  return _Object_(
     globalThis.Object.keys(properties).reduce((result, key) => {
       return { ...result, [key]: FromType(moduleProperties, properties[key]) as never }
     }, {} as TProperties),

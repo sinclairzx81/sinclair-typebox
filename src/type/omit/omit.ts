@@ -38,7 +38,7 @@ import { Literal, TLiteral, TLiteralValue } from '../literal/index'
 import { IndexPropertyKeys, type TIndexPropertyKeys } from '../indexed/index'
 import { Intersect, type TIntersect } from '../intersect/index'
 import { Union, type TUnion } from '../union/index'
-import { Object, type TObject, type TProperties } from '../object/index'
+import { Object as _Object_, type TObject, type TProperties } from '../object/index'
 import { type TRef } from '../ref/index'
 
 // ------------------------------------------------------------------
@@ -108,7 +108,7 @@ function FromObject<Type extends TObject, PropertyKeys extends PropertyKey[], Pr
   (type: Type, propertyKeys: [...PropertyKeys], properties: Properties): TFromObject<Type, PropertyKeys, Properties> {
   const options = Discard(type, [TransformKind, '$id', 'required', 'properties'])
   const mappedProperties = FromProperties(properties, propertyKeys)
-  return Object(mappedProperties, options) as never
+  return _Object_(mappedProperties, options) as never
 }
 // ------------------------------------------------------------------
 // UnionFromPropertyKeys
@@ -144,7 +144,7 @@ function OmitResolve<Type extends TSchema, PropertyKeys extends PropertyKey[]>
     IsIntersect(type) ? Intersect(FromIntersect(type.allOf, propertyKeys)) : 
     IsUnion(type) ? Union(FromUnion(type.anyOf, propertyKeys)) : 
     IsObject(type) ? FromObject(type, propertyKeys, type.properties) :
-    Object({})
+    _Object_({})
   ) as never
 }
 // ------------------------------------------------------------------

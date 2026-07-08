@@ -34,7 +34,7 @@ import { type TRecursive } from '../recursive/index'
 import { Computed, type TComputed } from '../computed/index'
 import { Intersect, type TIntersect } from '../intersect/index'
 import { Literal, type TLiteral, type TLiteralValue } from '../literal/index'
-import { Object, type TObject, type TProperties, type TPropertyKey } from '../object/index'
+import { Object as _Object_, type TObject, type TProperties, type TPropertyKey } from '../object/index'
 import { Union, type TUnion } from '../union/index'
 import { type TMappedKey, type TMappedResult } from '../mapped/index'
 import { type TRef } from '../ref/index'
@@ -102,7 +102,7 @@ function FromObject<Type extends TObject, keys extends PropertyKey[], Properties
   (Type: Type, keys: keys, properties: Properties): TFromObject<Type, keys, Properties> {
   const options = Discard(Type, [TransformKind, '$id', 'required', 'properties'])
   const mappedProperties = FromProperties(properties, keys)
-  return Object(mappedProperties, options) as never
+  return _Object_(mappedProperties, options) as never
 }
 // ------------------------------------------------------------------
 // UnionFromPropertyKeys
@@ -138,7 +138,7 @@ function PickResolve<Type extends TSchema, PropertyKeys extends PropertyKey[]>
     IsIntersect(type) ? Intersect(FromIntersect(type.allOf, propertyKeys)) : 
     IsUnion(type) ? Union(FromUnion(type.anyOf, propertyKeys)) : 
     IsObject(type) ? FromObject(type, propertyKeys, type.properties) :
-    Object({})
+    _Object_({})
   ) as never
 }
 // ------------------------------------------------------------------

@@ -48,7 +48,7 @@ import { Null, type TNull } from '../null/index'
 import { type TMappedKey } from '../mapped/index'
 import { Module, TModule } from '../module/index'
 import { Number, type TNumber, type NumberOptions } from '../number/index'
-import { Object, type TObject, type TProperties, type ObjectOptions } from '../object/index'
+import { Object as _Object_, type TObject, type TProperties, type ObjectOptions } from '../object/index'
 import { Omit, type TOmit } from '../omit/index'
 import { Optional, type TOptionalWithFlag, type TOptionalFromMappedResult } from '../optional/index'
 import { Partial, type TPartial, type TPartialFromMappedResult } from '../partial/index'
@@ -231,7 +231,7 @@ export class JsonTypeBuilder {
   }
   /** `[Json]` Creates an Object type */
   public Object<T extends TProperties>(properties: T, options?: ObjectOptions): TObject<T> {
-    return Object(properties, options)
+    return _Object_(properties, options)
   }
   /** `[Json]` Constructs a type whose keys are picked from the given type */
   public Omit<Type extends TSchema, Key extends PropertyKey[]>(type: Type, key: readonly [...Key], options?: SchemaOptions): TOmit<Type, Key>
