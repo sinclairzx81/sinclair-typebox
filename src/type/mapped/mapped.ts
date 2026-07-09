@@ -41,7 +41,7 @@ import { IndexPropertyKeys, type TIndexPropertyKeys } from '../indexed/index'
 import { Intersect, type TIntersect } from '../intersect/index'
 import { Iterator, type TIterator } from '../iterator/index'
 import { Literal, type TLiteral, type TLiteralValue } from '../literal/index'
-import { Object, type TObject, type TProperties, type ObjectOptions } from '../object/index'
+import { Object as _Object_, type TObject, type TProperties, type ObjectOptions } from '../object/index'
 import { Optional, type TOptional } from '../optional/index'
 import { Promise, type TPromise } from '../promise/index'
 import { Readonly, type TReadonly } from '../readonly/index'
@@ -222,7 +222,7 @@ function FromSchemaType<K extends PropertyKey, T extends TSchema>(K: K, T: T): F
     IsIntersect(T) ? Intersect(FromRest(K, T.allOf), options) :
     IsUnion(T) ? Union(FromRest(K, T.anyOf), options) :
     IsTuple(T) ? Tuple(FromRest(K, T.items ?? []), options) :
-    IsObject(T) ? Object(FromProperties(K, T.properties), options) :
+    IsObject(T) ? _Object_(FromProperties(K, T.properties), options) :
     IsArray(T) ? Array(FromSchemaType(K, T.items), options) :
     IsPromise(T) ? Promise(FromSchemaType(K, T.item), options) :
     T
@@ -267,5 +267,5 @@ export function Mapped(key: any, map: Function, options?: ObjectOptions) {
   const K = IsSchema(key) ? IndexPropertyKeys(key) : (key as PropertyKey[])
   const RT = map({ [Kind]: 'MappedKey', keys: K } as TMappedKey)
   const R = MappedFunctionReturnType(K, RT)
-  return Object(R, options)
+  return _Object_(R, options)
 }

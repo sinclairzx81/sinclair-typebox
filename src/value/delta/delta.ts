@@ -35,7 +35,7 @@ import { Equal } from '../equal/equal'
 import { TypeBoxError } from '../../type/error/index'
 
 import { Literal, type TLiteral } from '../../type/literal/index'
-import { Object, type TObject } from '../../type/object/index'
+import { Object as _Object_, type TObject } from '../../type/object/index'
 import { String, type TString } from '../../type/string/index'
 import { Unknown, type TUnknown } from '../../type/unknown/index'
 import { Union, type TUnion } from '../../type/union/index'
@@ -57,7 +57,7 @@ export const Insert: TObject<{
   type: TLiteral<'insert'>
   path: TString
   value: TUnknown
-}> = Object({
+}> = _Object_({
   type: Literal('insert'),
   path: String(),
   value: Unknown(),
@@ -67,7 +67,7 @@ export const Update: TObject<{
   type: TLiteral<'update'>
   path: TString
   value: TUnknown
-}> = Object({
+}> = _Object_({
   type: Literal('update'),
   path: String(),
   value: Unknown(),
@@ -76,7 +76,7 @@ export type Delete = Static<typeof Delete>
 export const Delete: TObject<{
   type: TLiteral<'delete'>
   path: TString
-}> = Object({
+}> = _Object_({
   type: Literal('delete'),
   path: String(),
 })

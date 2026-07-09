@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 import { TransformEncode, TransformDecode, HasTransform, TransformDecodeCheckError, TransformEncodeCheckError } from '../value/transform/index'
 import { Errors, ValueErrorIterator } from '../errors/index'
-import { TypeSystemPolicy } from '../system/index'
+import { TypeSystemPolicy, Evaluate } from '../system/index'
 import { TypeBoxError } from '../type/error/index'
 import { Deref } from '../value/deref/index'
 import { Hash } from '../value/hash/index'
@@ -617,6 +617,9 @@ export namespace TypeCompiler {
       : `return ${functionCode}`
     return [...variables, ...functions, checkFunction].join('\n')
   }
+  // ----------------------------------------------------------------
+  // Code
+  // ----------------------------------------------------------------
   /** Generates the code used to assert this type and returns it as a string */
   export function Code<T extends TSchema>(schema: T, references: TSchema[], options?: TypeCompilerCodegenOptions): string
   /** Generates the code used to assert this type and returns it as a string */
@@ -644,7 +647,7 @@ export namespace TypeCompiler {
   /** Compiles a TypeBox type for optimal runtime type checking. Types must be valid TypeBox types of TSchema */
   export function Compile<T extends TSchema>(schema: T, references: TSchema[] = []): TypeCheck<T> {
     const generatedCode = Code(schema, references, { language: 'javascript' })
-    const compiledFunction = globalThis.Function('kind', 'format', 'hash', generatedCode)
+    const compiledFunction = Evaluate('kind', 'format', 'hash', generatedCode)
     const instances = new Map(state.instances)
     function typeRegistryFunction(kind: string, instance: number, value: unknown) {
       if (!TypeRegistry.Has(kind) || !instances.has(instance)) return false

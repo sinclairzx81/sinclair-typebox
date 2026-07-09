@@ -42,7 +42,7 @@ import { type TArray } from '../array/index'
 import { type TAsyncIterator } from '../async-iterator/index'
 import { type TIterator } from '../iterator/index'
 import { type TPromise } from '../promise/index'
-import { type TObject, type TProperties, Object } from '../object/index'
+import { type TObject, type TProperties, Object as _Object_ } from '../object/index'
 import { type TRecordOrObject, type TRecord, Record, RecordKey, RecordValue } from '../record/index'
 
 import * as ValueGuard from '../guard/value'
@@ -170,7 +170,7 @@ type TFromObject<Args extends TSchema[], Properties extends TProperties,
 // prettier-ignore
 function FromObject(args: TSchema[], type: TObject): TObject {
   const mappedProperties = FromProperties(args, type.properties)
-  return { ...type, ...Object(mappedProperties) } // retain options
+  return { ...type, ..._Object_(mappedProperties) } // retain options
 }
 // ------------------------------------------------------------------
 // Object

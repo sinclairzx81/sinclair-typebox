@@ -37,7 +37,7 @@ import { Function as FunctionType, type TFunction } from '../function/index'
 import { Literal, type TLiteral } from '../literal/index'
 import { type TNever } from '../never/index'
 import { Null, type TNull } from '../null/index'
-import { Object, type TObject } from '../object/index'
+import { Object as _Object_, type TObject } from '../object/index'
 import { Symbol, type TSymbol } from '../symbol/index'
 import { Tuple, type TTuple } from '../tuple/index'
 import { Readonly, type TReadonly } from '../readonly/index'
@@ -112,7 +112,7 @@ function FromValue<T, Root extends boolean>(value: T, root: Root): FromValue<T, 
     IsArray(value) ? Readonly(Tuple(FromArray(value) as TSchema[])) :
     IsUint8Array(value) ? Uint8Array() :
     IsDate(value) ?  Date() :
-    IsObject(value) ? ConditionalReadonly(Object(FromProperties(value as Record<PropertyKey, unknown>) as TProperties), root) :
+    IsObject(value) ? ConditionalReadonly(_Object_(FromProperties(value as Record<PropertyKey, unknown>) as TProperties), root) :
     IsFunction(value) ? ConditionalReadonly(FunctionType([], Unknown()), root) :
     IsUndefined(value) ? Undefined() :
     IsNull(value) ? Null() :
@@ -121,7 +121,7 @@ function FromValue<T, Root extends boolean>(value: T, root: Root): FromValue<T, 
     IsNumber(value) ? Literal(value) :
     IsBoolean(value) ? Literal(value) :
     IsString(value) ? Literal(value) :
-    Object({})
+    _Object_({})
   ) as never
 }
 // ------------------------------------------------------------------

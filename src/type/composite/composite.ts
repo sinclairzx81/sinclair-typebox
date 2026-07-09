@@ -32,7 +32,7 @@ import { IntersectEvaluated, type TIntersectEvaluated } from '../intersect/index
 import { IndexFromPropertyKeys, type TIndexFromPropertyKeys } from '../indexed/index'
 import { KeyOfPropertyKeys, type TKeyOfPropertyKeys } from '../keyof/index'
 import { type TNever } from '../never/index'
-import { Object, type TObject, type TProperties, type ObjectOptions } from '../object/index'
+import { Object as _Object_, type TObject, type TProperties, type ObjectOptions } from '../object/index'
 import { SetDistinct, TSetDistinct } from '../sets/index'
 
 // ------------------------------------------------------------------
@@ -117,6 +117,6 @@ export type TComposite<T extends TSchema[]> = TCompositeEvaluate<T>
 export function Composite<T extends TSchema[]>(T: [...T], options?: ObjectOptions): TComposite<T> {
   const K = CompositeKeys(T)
   const P = CompositeProperties(T, K)
-  const R = Object(P, options)
+  const R = _Object_(P, options)
   return R as never
 }

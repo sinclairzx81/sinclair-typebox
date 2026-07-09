@@ -121,10 +121,28 @@ export interface TObject<T extends TProperties = TProperties> extends TSchema, O
   required: TRequiredArray<T>
 }
 /** `[Json]` Creates an Object type */
-function _Object<T extends TProperties>(properties: T, options?: ObjectOptions): TObject<T> {
+function _Object_<T extends TProperties>(properties: T, options?: ObjectOptions): TObject<T> {
   const required = RequiredArray(properties) as string[]
   const schema = required.length > 0 ? { [Kind]: 'Object', type: 'object', required, properties } : { [Kind]: 'Object', type: 'object', properties }
   return CreateType(schema, options) as never
 }
+
+// ------------------------------------------------------------------
+// TypeScript 7: CommonJS TS2441
+//
+// TypeScript generates a CommonJS shim that patches local variables
+// via an unqualified reference to Object (e.g. the __esModule shim's
+// Object.defineProperty call). Other compiler tools have been
+// observed patching in the same way, but TypeScript 7 has correctly
+// begun flagging variables named Object in CommonJS, since they
+// conflict with the shim and can cause "used before definition"
+// errors. This is CommonJS-specific; no such shim exists for ESM.
+//
+// TypeBox works around this using a `var` declaration, which is
+// known to avoid use-before-definition errors. TypeBox 1.x employs
+// a similar strategy.
+// ------------------------------------------------------------------
+
 /** `[Json]` Creates an Object type */
-export var Object = _Object
+// @ts-ignore - error TS2441: Duplicate identifier 'Object'. Compiler reserves name 'Object' in top level scope of a module.
+export var Object = _Object_

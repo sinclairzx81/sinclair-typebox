@@ -35,7 +35,7 @@ import { type TComputed, Computed } from '../computed/index'
 import { type TOptional } from '../optional/index'
 import { type TReadonly } from '../readonly/index'
 import { type TRecursive } from '../recursive/index'
-import { type TObject, type TProperties, Object } from '../object/index'
+import { type TObject, type TProperties, Object as _Object_ } from '../object/index'
 import { type TIntersect, Intersect } from '../intersect/index'
 import { type TUnion, Union } from '../union/index'
 import { type TRef, Ref } from '../ref/index'
@@ -110,7 +110,7 @@ function FromObject<Type extends TObject, Properties extends TProperties>
   (type: Type, properties: Properties): TFromObject<Type, Properties> {
   const options = Discard(type, [TransformKind, '$id', 'required', 'properties'])
   const mappedProperties = FromProperties(properties)
-  return Object(mappedProperties, options) as never
+  return _Object_(mappedProperties, options) as never
 }
 // ------------------------------------------------------------------
 // FromRest
@@ -148,7 +148,7 @@ function RequiredResolve<Type extends TSchema>(type: Type): TRequired<Type> {
     KindGuard.IsSymbol(type) ? type :
     KindGuard.IsUndefined(type) ? type :
     // Passthrough
-    Object({})
+    _Object_({})
   ) as never
 }
 // ------------------------------------------------------------------
