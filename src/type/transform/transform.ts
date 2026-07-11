@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@ THE SOFTWARE.
 import type { TSchema } from '../schema/index'
 import type { Static, StaticDecode } from '../static/index'
 import { TransformKind } from '../symbols/index'
+import { CloneType } from '../clone/type'
 
 // ------------------------------------------------------------------
 // TypeGuard
@@ -57,9 +58,10 @@ export class TransformEncodeBuilder<T extends TSchema, D extends TransformFuncti
     const Codec = { Decode: this.decode, Encode: encode }
     return { ...schema, [TransformKind]: Codec }
   }
-  public Encode<E extends TransformFunction<ReturnType<D>, StaticDecode<T>>>(encode: E): TTransform<T, ReturnType<D>> { 
+  public Encode<E extends TransformFunction<ReturnType<D>, StaticDecode<T>>>(encode: E): TTransform<T, ReturnType<D>> {
+    const schema = CloneType(this.schema)
     return (
-      IsTransform(this.schema) ? this.EncodeTransform(encode, this.schema): this.EncodeSchema(encode, this.schema)
+      IsTransform(schema) ? this.EncodeTransform(encode, schema): this.EncodeSchema(encode, schema)
     ) as never
   }
 }

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,11 @@ THE SOFTWARE.
 import { KeyOfPropertyKeys } from '../../type/keyof/index'
 import { Check } from '../check/index'
 import { Clone } from '../clone/index'
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 import { Kind } from '../../type/symbols/index'
 
 import type { TSchema } from '../../type/schema/index'
 import type { TArray } from '../../type/array/index'
-import type { TImport } from '../../type/module/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TObject } from '../../type/object/index'
 import type { TRecord } from '../../type/record/index'
@@ -48,7 +47,6 @@ import type { TUnion } from '../../type/union/index'
 // ------------------------------------------------------------------
 // prettier-ignore
 import { 
-  HasPropertyKey,
   IsString, 
   IsObject, 
   IsArray, 
@@ -59,14 +57,13 @@ import {
 // ------------------------------------------------------------------
 // prettier-ignore
 import { 
-  IsKind
-} from '../../type/guard/kind'
-
+  IsSchema
+} from '../../type/guard/type'
 // ------------------------------------------------------------------
 // IsCheckable
 // ------------------------------------------------------------------
 function IsCheckable(schema: unknown): boolean {
-  return IsKind(schema) && schema[Kind] !== 'Unsafe'
+  return IsSchema(schema) && schema[Kind] !== 'Unsafe'
 }
 // ------------------------------------------------------------------
 // Types
@@ -75,16 +72,11 @@ function FromArray(schema: TArray, references: TSchema[], value: unknown): any {
   if (!IsArray(value)) return value
   return value.map((value) => Visit(schema.items, references, value))
 }
-function FromImport(schema: TImport, references: TSchema[], value: unknown): any {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions], value)
-}
 function FromIntersect(schema: TIntersect, references: TSchema[], value: unknown): any {
   const unevaluatedProperties = schema.unevaluatedProperties as TSchema
   const intersections = schema.allOf.map((schema) => Visit(schema, references, Clone(value)))
   const composite = intersections.reduce((acc: any, value: any) => (IsObject(value) ? { ...acc, ...value } : value), {})
-  if (!IsObject(value) || !IsObject(composite) || !IsKind(unevaluatedProperties)) return composite
+  if (!IsObject(value) || !IsObject(composite) || !IsSchema(unevaluatedProperties)) return composite
   const knownkeys = KeyOfPropertyKeys(schema) as string[]
   for (const key of Object.getOwnPropertyNames(value)) {
     if (knownkeys.includes(key)) continue
@@ -98,11 +90,11 @@ function FromObject(schema: TObject, references: TSchema[], value: unknown): any
   if (!IsObject(value) || IsArray(value)) return value // Check IsArray for AllowArrayObject configuration
   const additionalProperties = schema.additionalProperties as TSchema
   for (const key of Object.getOwnPropertyNames(value)) {
-    if (HasPropertyKey(schema.properties, key)) {
+    if (key in schema.properties) {
       value[key] = Visit(schema.properties[key], references, value[key])
       continue
     }
-    if (IsKind(additionalProperties) && Check(additionalProperties, references, value[key])) {
+    if (IsSchema(additionalProperties) && Check(additionalProperties, references, value[key])) {
       value[key] = Visit(additionalProperties, references, value[key])
       continue
     }
@@ -121,7 +113,7 @@ function FromRecord(schema: TRecord, references: TSchema[], value: unknown): any
       value[key] = Visit(propertySchema, references, value[key])
       continue
     }
-    if (IsKind(additionalProperties) && Check(additionalProperties, references, value[key])) {
+    if (IsSchema(additionalProperties) && Check(additionalProperties, references, value[key])) {
       value[key] = Visit(additionalProperties, references, value[key])
       continue
     }
@@ -156,13 +148,11 @@ function FromUnion(schema: TUnion, references: TSchema[], value: unknown): any {
   return value
 }
 function Visit(schema: TSchema, references: TSchema[], value: unknown): unknown {
-  const references_ = IsString(schema.$id) ? Pushref(schema, references) : references
+  const references_ = IsString(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema_[Kind]) {
     case 'Array':
       return FromArray(schema_, references_, value)
-    case 'Import':
-      return FromImport(schema_, references_, value)
     case 'Intersect':
       return FromIntersect(schema_, references_, value)
     case 'Object':

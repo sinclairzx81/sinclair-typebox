@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
+import { CloneType } from '../clone/type'
 import { Ensure } from '../helpers/index'
 import type { SchemaOptions, TSchema } from '../schema/index'
 import type { Static } from '../static/index'
@@ -54,6 +54,11 @@ export interface TArray<T extends TSchema = TSchema> extends TSchema, ArrayOptio
   items: T
 }
 /** `[Json]` Creates an Array type */
-export function Array<Type extends TSchema>(items: Type, options?: ArrayOptions): TArray<Type> {
-  return CreateType({ [Kind]: 'Array', type: 'array', items }, options) as never
+export function Array<T extends TSchema>(schema: T, options: ArrayOptions = {}): TArray<T> {
+  return {
+    ...options,
+    [Kind]: 'Array',
+    type: 'array',
+    items: CloneType(schema),
+  } as never
 }

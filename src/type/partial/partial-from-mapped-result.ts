@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ import type { Ensure, Evaluate } from '../helpers/index'
 import type { TProperties } from '../object/index'
 import { MappedResult, type TMappedResult } from '../mapped/index'
 import { Partial, type TPartial } from './partial'
-import { Clone } from '../clone/value'
 
 // ------------------------------------------------------------------
 // FromProperties
@@ -45,9 +44,9 @@ type TFromProperties<
 // prettier-ignore
 function FromProperties<
   P extends TProperties
->(K: P, options?: SchemaOptions): TFromProperties<P> {
+>(K: P, options: SchemaOptions): TFromProperties<P> {
   const Acc = {} as TProperties
-  for(const K2 of globalThis.Object.getOwnPropertyNames(K)) Acc[K2] = Partial(K[K2], Clone(options))
+  for(const K2 of globalThis.Object.getOwnPropertyNames(K)) Acc[K2] = Partial(K[K2], options)
   return Acc as never
 }
 // ------------------------------------------------------------------
@@ -62,7 +61,7 @@ type TFromMappedResult<
 // prettier-ignore
 function FromMappedResult<
   R extends TMappedResult
->(R: R, options?: SchemaOptions): TFromMappedResult<R> {
+>(R: R, options: SchemaOptions): TFromMappedResult<R> {
   return FromProperties(R.properties, options) as never
 }
 // ------------------------------------------------------------------
@@ -79,7 +78,7 @@ export type TPartialFromMappedResult<
 export function PartialFromMappedResult<
   R extends TMappedResult,
   P extends TProperties = TFromMappedResult<R>
->(R: R, options?: SchemaOptions): TMappedResult<P> {
+>(R: R, options: SchemaOptions): TMappedResult<P> {
   const P = FromMappedResult(R, options)
   return MappedResult(P) as never
 }

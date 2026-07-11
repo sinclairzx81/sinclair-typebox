@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -37,14 +37,14 @@ import { Function as FunctionType, type TFunction } from '../function/index'
 import { Literal, type TLiteral } from '../literal/index'
 import { type TNever } from '../never/index'
 import { Null, type TNull } from '../null/index'
-import { Object as _Object_, type TObject } from '../object/index'
+import { Object, type TObject } from '../object/index'
 import { Symbol, type TSymbol } from '../symbol/index'
 import { Tuple, type TTuple } from '../tuple/index'
 import { Readonly, type TReadonly } from '../readonly/index'
 import { Undefined, type TUndefined } from '../undefined/index'
 import { Uint8Array, type TUint8Array } from '../uint8array/index'
 import { Unknown, type TUnknown } from '../unknown/index'
-import { CreateType } from '../create/index'
+import { CloneType } from '../clone/index'
 
 // ------------------------------------------------------------------
 // ValueGuard
@@ -112,7 +112,7 @@ function FromValue<T, Root extends boolean>(value: T, root: Root): FromValue<T, 
     IsArray(value) ? Readonly(Tuple(FromArray(value) as TSchema[])) :
     IsUint8Array(value) ? Uint8Array() :
     IsDate(value) ?  Date() :
-    IsObject(value) ? ConditionalReadonly(_Object_(FromProperties(value as Record<PropertyKey, unknown>) as TProperties), root) :
+    IsObject(value) ? ConditionalReadonly(Object(FromProperties(value as Record<PropertyKey, unknown>) as TProperties), root) :
     IsFunction(value) ? ConditionalReadonly(FunctionType([], Unknown()), root) :
     IsUndefined(value) ? Undefined() :
     IsNull(value) ? Null() :
@@ -121,7 +121,7 @@ function FromValue<T, Root extends boolean>(value: T, root: Root): FromValue<T, 
     IsNumber(value) ? Literal(value) :
     IsBoolean(value) ? Literal(value) :
     IsString(value) ? Literal(value) :
-    _Object_({})
+    Object({})
   ) as never
 }
 // ------------------------------------------------------------------
@@ -130,6 +130,6 @@ function FromValue<T, Root extends boolean>(value: T, root: Root): FromValue<T, 
 export type TConst<T> = FromValue<T, true>
 
 /** `[JavaScript]` Creates a readonly const type from the given value. */
-export function Const</* const (not supported in 4.0) */ T>(T: T, options?: SchemaOptions): TConst<T> {
-  return CreateType(FromValue(T, true), options) as never
+export function Const</* const (not supported in 4.0) */ T>(T: T, options: SchemaOptions = {}): TConst<T> {
+  return CloneType(FromValue(T, true), options) as never
 }

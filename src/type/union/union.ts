@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ THE SOFTWARE.
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { type TNever, Never } from '../never/index'
 import type { TUnion } from './union-type'
-import { CreateType } from '../create/type'
+import { CloneType } from '../clone/type'
 import { UnionCreate } from './union-create'
 
 // prettier-ignore
@@ -39,11 +39,11 @@ export type Union<T extends TSchema[]> = (
   TUnion<T>
 )
 /** `[Json]` Creates a Union type */
-export function Union<Types extends TSchema[]>(types: [...Types], options?: SchemaOptions): Union<Types> {
+export function Union<T extends TSchema[]>(T: [...T], options: SchemaOptions = {}): Union<T> {
   // prettier-ignore
   return (
-    types.length === 0 ? Never(options) :
-    types.length === 1 ? CreateType(types[0], options) :
-    UnionCreate(types, options)
-  ) as Union<Types>
+    T.length === 0 ? Never(options) :
+    T.length === 1 ? CloneType(T[0], options) :
+    UnionCreate(T, options)
+  ) as Union<T>
 }

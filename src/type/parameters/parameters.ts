@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,20 +28,16 @@ THE SOFTWARE.
 
 import type { TSchema, SchemaOptions } from '../schema/index'
 import type { TFunction } from '../function/index'
+import type { Ensure } from '../helpers/index'
 import { Tuple, type TTuple } from '../tuple/index'
-import { Never, type TNever } from '../never/index'
-import * as KindGuard from '../guard/kind'
+import { CloneRest } from '../clone/type'
 
 // ------------------------------------------------------------------
 // Parameters
 // ------------------------------------------------------------------
-// prettier-ignore
-export type TParameters<Type extends TSchema> = (
-  Type extends TFunction<infer Parameters extends TSchema[], infer _ReturnType extends TSchema>
-    ? TTuple<Parameters>
-    : TNever
-)
+export type TParameters<T extends TFunction> = Ensure<TTuple<T['parameters']>>
+
 /** `[JavaScript]` Extracts the Parameters from the given Function type */
-export function Parameters<Type extends TSchema>(schema: Type, options?: SchemaOptions): TParameters<Type> {
-  return (KindGuard.IsFunction(schema) ? Tuple(schema.parameters, options) : Never()) as never
+export function Parameters<T extends TFunction<TSchema[], TSchema>>(schema: T, options: SchemaOptions = {}): TParameters<T> {
+  return Tuple(CloneRest(schema.parameters), { ...options })
 }

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -50,18 +50,18 @@ export type TypedArrayType =
 // --------------------------------------------------------------------------
 /** Returns true if this value is an async iterator */
 export function IsAsyncIterator(value: unknown): value is AsyncIterableIterator<any> {
-  return IsObject(value) && globalThis.Symbol.asyncIterator in value
+  return IsObject(value) && Symbol.asyncIterator in value
 }
 /** Returns true if this value is an iterator */
 export function IsIterator(value: unknown): value is IterableIterator<any> {
-  return IsObject(value) && globalThis.Symbol.iterator in value
+  return IsObject(value) && Symbol.iterator in value
 }
 // --------------------------------------------------------------------------
 // Object Instances
 // --------------------------------------------------------------------------
 /** Returns true if this value is not an instance of a class */
 export function IsStandardObject(value: unknown): value is ObjectType {
-  return IsObject(value) && (globalThis.Object.getPrototypeOf(value) === Object.prototype || globalThis.Object.getPrototypeOf(value) === null)
+  return IsObject(value) && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
 }
 /** Returns true if this value is an instance of a class */
 export function IsInstanceObject(value: unknown): value is ObjectType {
@@ -72,11 +72,11 @@ export function IsInstanceObject(value: unknown): value is ObjectType {
 // --------------------------------------------------------------------------
 /** Returns true if this value is a Promise */
 export function IsPromise(value: unknown): value is Promise<unknown> {
-  return value instanceof globalThis.Promise
+  return value instanceof Promise
 }
 /** Returns true if this value is a Date */
 export function IsDate(value: unknown): value is Date {
-  return value instanceof Date && globalThis.Number.isFinite(value.getTime())
+  return value instanceof Date && Number.isFinite(value.getTime())
 }
 /** Returns true if this value is an instance of Map<K, T> */
 export function IsMap(value: unknown): value is Map<unknown, unknown> {
@@ -92,7 +92,7 @@ export function IsRegExp(value: unknown): value is RegExp {
 }
 /** Returns true if this value is a typed array */
 export function IsTypedArray(value: unknown): value is TypedArrayType {
-  return globalThis.ArrayBuffer.isView(value)
+  return ArrayBuffer.isView(value)
 }
 /** Returns true if the value is a Int8Array */
 export function IsInt8Array(value: unknown): value is Int8Array {
@@ -139,22 +139,19 @@ export function IsBigUint64Array(value: unknown): value is BigUint64Array {
   return value instanceof globalThis.BigUint64Array
 }
 // --------------------------------------------------------------------------
-// PropertyKey
-// --------------------------------------------------------------------------
-/** Returns true if this value has this property key */
-export function HasPropertyKey<K extends PropertyKey>(value: Record<any, unknown>, key: K): value is Record<PropertyKey, unknown> & { [_ in K]: unknown } {
-  return key in value
-}
-// --------------------------------------------------------------------------
 // Standard
 // --------------------------------------------------------------------------
+/** Returns true if this value has this property key */
+export function HasPropertyKey<K extends PropertyKey>(value: Record<any, unknown>, key: K): value is ObjectType & Record<K, unknown> {
+  return key in value
+}
 /** Returns true of this value is an object type */
 export function IsObject(value: unknown): value is ObjectType {
   return value !== null && typeof value === 'object'
 }
 /** Returns true if this value is an array, but not a typed array */
 export function IsArray(value: unknown): value is ArrayType {
-  return globalThis.Array.isArray(value) && !globalThis.ArrayBuffer.isView(value)
+  return Array.isArray(value) && !ArrayBuffer.isView(value)
 }
 /** Returns true if this value is an undefined */
 export function IsUndefined(value: unknown): value is undefined {
@@ -174,7 +171,7 @@ export function IsNumber(value: unknown): value is number {
 }
 /** Returns true if this value is an integer */
 export function IsInteger(value: unknown): value is number {
-  return globalThis.Number.isInteger(value)
+  return Number.isInteger(value)
 }
 /** Returns true if this value is bigint */
 export function IsBigInt(value: unknown): value is bigint {

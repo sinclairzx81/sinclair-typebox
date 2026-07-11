@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
 
@@ -36,6 +35,10 @@ export interface TNever extends TSchema {
   not: {}
 }
 /** `[Json]` Creates a Never type */
-export function Never(options?: SchemaOptions): TNever {
-  return CreateType({ [Kind]: 'Never', not: {} }, options) as never
+export function Never(options: SchemaOptions = {}): TNever {
+  return {
+    ...options,
+    [Kind]: 'Never',
+    not: {},
+  } as never
 }

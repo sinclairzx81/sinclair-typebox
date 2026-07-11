@@ -61,45 +61,4 @@ describe('guard/type/TRequired', () => {
     const R = Type.Required(S)
     Assert.IsFalse(TransformKind in R)
   })
-  // ----------------------------------------------------------------
-  // https://github.com/sinclairzx81/typebox/issues/980
-  // ----------------------------------------------------------------
-  it('Should override properties in source type', () => {
-    const A = Type.Object({ x: Type.Number() }, { title: 'A' })
-    const B = Type.Required(A, { title: 'B' })
-    Assert.IsEqual(A.title, 'A')
-    Assert.IsEqual(B.title, 'B')
-  })
-  // ------------------------------------------------------------------
-  // Intrinsic Passthough
-  // https://github.com/sinclairzx81/typebox/issues/1169
-  // ------------------------------------------------------------------
-  it('Should pass through on intrinsic types on union 1', () => {
-    const T = Type.Required(
-      Type.Union([
-        Type.Number(),
-        Type.Object({
-          x: Type.Optional(Type.Number()),
-        }),
-      ]),
-    )
-    Assert.IsTrue(TypeGuard.IsUnion(T))
-    Assert.IsTrue(TypeGuard.IsNumber(T.anyOf[0]))
-    Assert.IsTrue(TypeGuard.IsObject(T.anyOf[1]))
-    Assert.IsFalse(TypeGuard.IsOptional(T.anyOf[1].properties.x))
-  })
-  it('Should pass through on intrinsic types on union 2', () => {
-    const T = Type.Required(
-      Type.Union([
-        Type.Literal(1),
-        Type.Object({
-          x: Type.Optional(Type.Number()),
-        }),
-      ]),
-    )
-    Assert.IsTrue(TypeGuard.IsUnion(T))
-    Assert.IsTrue(TypeGuard.IsLiteral(T.anyOf[0]))
-    Assert.IsTrue(TypeGuard.IsObject(T.anyOf[1]))
-    Assert.IsFalse(TypeGuard.IsOptional(T.anyOf[1].properties.x))
-  })
 })

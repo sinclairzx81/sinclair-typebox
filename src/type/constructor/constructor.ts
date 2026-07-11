@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ import type { Ensure } from '../helpers/index'
 import type { TReadonlyOptional } from '../readonly-optional/index'
 import type { TReadonly } from '../readonly/index'
 import type { TOptional } from '../optional/index'
-import { CreateType } from '../create/type'
+import { CloneType, CloneRest } from '../clone/type'
 import { Kind } from '../symbols/index'
 
 // ------------------------------------------------------------------
@@ -66,5 +66,11 @@ export interface TConstructor<T extends TSchema[] = TSchema[], U extends TSchema
 }
 /** `[JavaScript]` Creates a Constructor type */
 export function Constructor<T extends TSchema[], U extends TSchema>(parameters: [...T], returns: U, options?: SchemaOptions): TConstructor<T, U> {
-  return CreateType({ [Kind]: 'Constructor', type: 'Constructor', parameters, returns }, options) as never
+  return {
+    ...options,
+    [Kind]: 'Constructor',
+    type: 'Constructor',
+    parameters: CloneRest(parameters),
+    returns: CloneType(returns),
+  } as never
 }

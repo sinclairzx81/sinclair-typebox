@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ THE SOFTWARE.
 
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
-import { CreateType } from '../create/type'
 
 export interface DateOptions extends SchemaOptions {
   /** The exclusive maximum timestamp value */
@@ -48,6 +47,10 @@ export interface TDate extends TSchema, DateOptions {
   type: 'date'
 }
 /** `[JavaScript]` Creates a Date type */
-export function Date(options?: DateOptions): TDate {
-  return CreateType({ [Kind]: 'Date', type: 'Date' }, options) as never
+export function Date(options: DateOptions = {}): TDate {
+  return {
+    ...options,
+    [Kind]: 'Date',
+    type: 'Date',
+  } as never
 }

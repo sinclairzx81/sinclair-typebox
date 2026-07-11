@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ THE SOFTWARE.
 import type { TSchema, SchemaOptions } from '../schema/index'
 import type { Static } from '../static/index'
 import { Kind } from '../symbols/index'
-import { CreateType } from '../create/type'
+import { CloneType } from '../clone/type'
 
 export interface TAsyncIterator<T extends TSchema = TSchema> extends TSchema {
   [Kind]: 'AsyncIterator'
@@ -38,6 +38,11 @@ export interface TAsyncIterator<T extends TSchema = TSchema> extends TSchema {
   items: T
 }
 /** `[JavaScript]` Creates a AsyncIterator type */
-export function AsyncIterator<T extends TSchema>(items: T, options?: SchemaOptions): TAsyncIterator<T> {
-  return CreateType({ [Kind]: 'AsyncIterator', type: 'AsyncIterator', items }, options) as never
+export function AsyncIterator<T extends TSchema>(items: T, options: SchemaOptions = {}): TAsyncIterator<T> {
+  return {
+    ...options,
+    [Kind]: 'AsyncIterator',
+    type: 'AsyncIterator',
+    items: CloneType(items),
+  } as never
 }

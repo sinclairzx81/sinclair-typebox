@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,20 +26,13 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
-import { type TSchema, SchemaOptions } from '../schema/index'
-import { type TConstructor } from '../constructor/index'
-import { type TNever, Never } from '../never/index'
-import * as KindGuard from '../guard/kind'
+import type { TSchema, SchemaOptions } from '../schema/index'
+import type { TConstructor } from '../constructor/index'
+import { CloneType } from '../clone/type'
 
-// prettier-ignore
-export type TInstanceType<Type extends TSchema,
-  Result extends TSchema = Type extends TConstructor<infer _Parameters extends TSchema[], infer InstanceType extends TSchema>
-    ? InstanceType
-    : TNever
-> = Result
+export type TInstanceType<T extends TConstructor<TSchema[], TSchema>> = T['returns']
 
 /** `[JavaScript]` Extracts the InstanceType from the given Constructor type */
-export function InstanceType<Type extends TSchema>(schema: Type, options?: SchemaOptions): TInstanceType<Type> {
-  return (KindGuard.IsConstructor(schema) ? CreateType(schema.returns, options) : Never(options)) as never
+export function InstanceType<T extends TConstructor<any[], any>>(schema: T, options: SchemaOptions = {}): TInstanceType<T> {
+  return CloneType(schema.returns, options)
 }

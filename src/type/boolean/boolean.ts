@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ THE SOFTWARE.
 
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
-import { CreateType } from '../create/index'
 
 export interface TBoolean extends TSchema {
   [Kind]: 'Boolean'
@@ -36,6 +35,10 @@ export interface TBoolean extends TSchema {
   type: 'boolean'
 }
 /** `[Json]` Creates a Boolean type */
-export function Boolean(options?: SchemaOptions): TBoolean {
-  return CreateType({ [Kind]: 'Boolean', type: 'boolean' }, options) as never
+export function Boolean(options: SchemaOptions = {}): TBoolean {
+  return {
+    ...options,
+    [Kind]: 'Boolean',
+    type: 'boolean',
+  } as never
 }

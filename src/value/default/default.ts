@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,12 +28,11 @@ THE SOFTWARE.
 
 import { Check } from '../check/index'
 import { Clone } from '../clone/index'
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 import { Kind } from '../../type/symbols/index'
 
 import type { TSchema } from '../../type/schema/index'
 import type { TArray } from '../../type/array/index'
-import type { TImport } from '../../type/module/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TObject } from '../../type/object/index'
 import type { TRecord } from '../../type/record/index'
@@ -45,52 +44,39 @@ import type { TUnion } from '../../type/union/index'
 // ------------------------------------------------------------------
 // ValueGuard
 // ------------------------------------------------------------------
-import { IsArray, IsDate, IsFunction, IsObject, IsUndefined, HasPropertyKey } from '../guard/index'
+import { IsString, IsObject, IsArray, IsUndefined } from '../guard/index'
 // ------------------------------------------------------------------
 // TypeGuard
 // ------------------------------------------------------------------
-import { IsKind } from '../../type/guard/kind'
+import { IsSchema } from '../../type/guard/type'
 // ------------------------------------------------------------------
 // ValueOrDefault
 // ------------------------------------------------------------------
-function ValueOrDefault(schema: TSchema, value: unknown): unknown {
-  const defaultValue = HasPropertyKey(schema, 'default') ? schema.default : undefined
-  const clone = IsFunction(defaultValue) ? defaultValue() : Clone(defaultValue)
-  return IsUndefined(value) ? clone : IsObject(value) && IsObject(clone) ? Object.assign(clone, value) : value
+function ValueOrDefault(schema: TSchema, value: unknown) {
+  return value === undefined && 'default' in schema ? Clone(schema.default) : value
 }
 // ------------------------------------------------------------------
-// HasDefaultProperty
+// IsCheckable
 // ------------------------------------------------------------------
-function HasDefaultProperty(schema: unknown): schema is TSchema {
-  return IsKind(schema) && 'default' in schema
+function IsCheckable(schema: unknown): boolean {
+  return IsSchema(schema) && schema[Kind] !== 'Unsafe'
+}
+// ------------------------------------------------------------------
+// IsDefaultSchema
+// ------------------------------------------------------------------
+function IsDefaultSchema(value: unknown): value is TSchema {
+  return IsSchema(value) && 'default' in value
 }
 // ------------------------------------------------------------------
 // Types
 // ------------------------------------------------------------------
 function FromArray(schema: TArray, references: TSchema[], value: unknown): any {
-  // if the value is an array, we attempt to initialize it's elements
-  if (IsArray(value)) {
-    for (let i = 0; i < value.length; i++) {
-      value[i] = Visit(schema.items, references, value[i])
-    }
-    return value
-  }
-  // ... otherwise use default initialization
   const defaulted = ValueOrDefault(schema, value)
   if (!IsArray(defaulted)) return defaulted
   for (let i = 0; i < defaulted.length; i++) {
     defaulted[i] = Visit(schema.items, references, defaulted[i])
   }
   return defaulted
-}
-function FromDate(schema: TArray, references: TSchema[], value: unknown): any {
-  // special case intercept for dates
-  return IsDate(value) ? value : ValueOrDefault(schema, value)
-}
-function FromImport(schema: TImport, references: TSchema[], value: unknown): any {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions], value)
 }
 function FromIntersect(schema: TIntersect, references: TSchema[], value: unknown): any {
   const defaulted = ValueOrDefault(schema, value)
@@ -101,24 +87,20 @@ function FromIntersect(schema: TIntersect, references: TSchema[], value: unknown
 }
 function FromObject(schema: TObject, references: TSchema[], value: unknown): any {
   const defaulted = ValueOrDefault(schema, value)
-  // return defaulted
   if (!IsObject(defaulted)) return defaulted
+  const additionalPropertiesSchema = schema.additionalProperties as TSchema
   const knownPropertyKeys = Object.getOwnPropertyNames(schema.properties)
   // properties
   for (const key of knownPropertyKeys) {
-    // note: we need to traverse into the object and test if the return value
-    // yielded a non undefined result. Here we interpret an undefined result as
-    // a non assignable property and continue.
-    const propertyValue = Visit(schema.properties[key], references, defaulted[key])
-    if (IsUndefined(propertyValue)) continue
+    if (!IsDefaultSchema(schema.properties[key])) continue
     defaulted[key] = Visit(schema.properties[key], references, defaulted[key])
   }
   // return if not additional properties
-  if (!HasDefaultProperty(schema.additionalProperties)) return defaulted
+  if (!IsDefaultSchema(additionalPropertiesSchema)) return defaulted
   // additional properties
   for (const key of Object.getOwnPropertyNames(defaulted)) {
     if (knownPropertyKeys.includes(key)) continue
-    defaulted[key] = Visit(schema.additionalProperties, references, defaulted[key])
+    defaulted[key] = Visit(additionalPropertiesSchema, references, defaulted[key])
   }
   return defaulted
 }
@@ -130,11 +112,11 @@ function FromRecord(schema: TRecord, references: TSchema[], value: unknown): any
   const knownPropertyKey = new RegExp(propertyKeyPattern)
   // properties
   for (const key of Object.getOwnPropertyNames(defaulted)) {
-    if (!(knownPropertyKey.test(key) && HasDefaultProperty(propertySchema))) continue
+    if (!(knownPropertyKey.test(key) && IsDefaultSchema(propertySchema))) continue
     defaulted[key] = Visit(propertySchema, references, defaulted[key])
   }
   // return if not additional properties
-  if (!HasDefaultProperty(additionalPropertiesSchema)) return defaulted
+  if (!IsDefaultSchema(additionalPropertiesSchema)) return defaulted
   // additional properties
   for (const key of Object.getOwnPropertyNames(defaulted)) {
     if (knownPropertyKey.test(key)) continue
@@ -160,23 +142,19 @@ function FromTuple(schema: TTuple, references: TSchema[], value: unknown): any {
 function FromUnion(schema: TUnion, references: TSchema[], value: unknown): any {
   const defaulted = ValueOrDefault(schema, value)
   for (const inner of schema.anyOf) {
-    const result = Visit(inner, references, Clone(defaulted))
-    if (Check(inner, references, result)) {
+    const result = Visit(inner, references, defaulted)
+    if (IsCheckable(inner) && Check(inner, result)) {
       return result
     }
   }
   return defaulted
 }
 function Visit(schema: TSchema, references: TSchema[], value: unknown): any {
-  const references_ = Pushref(schema, references)
+  const references_ = IsString(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema_[Kind]) {
     case 'Array':
       return FromArray(schema_, references_, value)
-    case 'Date':
-      return FromDate(schema_, references_, value)
-    case 'Import':
-      return FromImport(schema_, references_, value)
     case 'Intersect':
       return FromIntersect(schema_, references_, value)
     case 'Object':

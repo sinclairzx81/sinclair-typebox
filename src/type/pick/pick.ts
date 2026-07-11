@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,166 +26,93 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
-import { Discard } from '../discard/discard'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import type { TupleToUnion, Evaluate } from '../helpers/index'
 import { type TRecursive } from '../recursive/index'
-import { Computed, type TComputed } from '../computed/index'
-import { Intersect, type TIntersect } from '../intersect/index'
-import { Literal, type TLiteral, type TLiteralValue } from '../literal/index'
-import { Object as _Object_, type TObject, type TProperties, type TPropertyKey } from '../object/index'
-import { Union, type TUnion } from '../union/index'
-import { type TMappedKey, type TMappedResult } from '../mapped/index'
-import { type TRef } from '../ref/index'
+import { type TIntersect, Intersect } from '../intersect/index'
+import { type TUnion, Union } from '../union/index'
+import { type TObject, type TProperties, type TPropertyKey, Object } from '../object/index'
+import type { TMappedKey, TMappedResult } from '../mapped/index'
 import { IndexPropertyKeys, type TIndexPropertyKeys } from '../indexed/index'
-import { TransformKind } from '../symbols/symbols'
-
-// ------------------------------------------------------------------
-// Guards
-// ------------------------------------------------------------------
-import { IsMappedKey, IsMappedResult, IsIntersect, IsUnion, IsObject, IsSchema, IsLiteralValue, IsRef } from '../guard/kind'
-import { IsArray as IsArrayValue } from '../guard/value'
-
-// ------------------------------------------------------------------
-// Infrastructure
-// ------------------------------------------------------------------
+import { Discard } from '../discard/index'
+import { TransformKind } from '../symbols/index'
+import { CloneType } from '../clone/type'
 import { PickFromMappedKey, type TPickFromMappedKey } from './pick-from-mapped-key'
 import { PickFromMappedResult, type TPickFromMappedResult } from './pick-from-mapped-result'
 
 // ------------------------------------------------------------------
+// TypeGuard
+// ------------------------------------------------------------------
+import { IsMappedKey, IsMappedResult, IsIntersect, IsUnion, IsObject, IsSchema } from '../guard/kind'
+// ------------------------------------------------------------------
 // FromIntersect
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromIntersect<Types extends TSchema[], PropertyKeys extends PropertyKey[], Result extends TSchema[] = []> = 
-  Types extends [infer L extends TSchema, ...infer R extends TSchema[]]
-    ? TFromIntersect<R, PropertyKeys, [...Result, TPick<L, PropertyKeys>]>
-    : Result
-function FromIntersect<Types extends TSchema[], PropertyKeys extends PropertyKey[]>(types: Types, propertyKeys: PropertyKeys): TFromIntersect<Types, PropertyKeys> {
-  return types.map((type) => PickResolve(type, propertyKeys)) as never
+type FromIntersect<T extends TSchema[], K extends PropertyKey[], Acc extends TSchema[] = []> = 
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]]
+    ? FromIntersect<R, K, [...Acc, TPick<L, K>]>
+    : Acc
+function FromIntersect<T extends TSchema[], K extends PropertyKey[]>(T: T, K: K) {
+  return T.map((T) => PickResolve(T, K)) as FromIntersect<T, K>
 }
 // ------------------------------------------------------------------
 // FromUnion
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromUnion<Types extends TSchema[], PropertyKeys extends PropertyKey[], Result extends TSchema[] = []> = 
-  Types extends [infer L extends TSchema, ...infer R extends TSchema[]]
-    ? TFromUnion<R, PropertyKeys, [...Result, TPick<L, PropertyKeys>]>
-    : Result
+type FromUnion<T extends TSchema[], K extends PropertyKey[], Acc extends TSchema[] = []> = 
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]]
+    ? FromUnion<R, K, [...Acc, TPick<L, K>]>
+    : Acc
 // prettier-ignore
-function FromUnion<Types extends TSchema[], PropertyKeys extends PropertyKey[]>(types: Types, propertyKeys: PropertyKeys): TFromUnion<Types, PropertyKeys> {
-  return types.map((type) => PickResolve(type, propertyKeys)) as never
+function FromUnion<T extends TSchema[], K extends PropertyKey[]>(T: T, K: K) {
+  return T.map((T) => PickResolve(T, K)) as FromUnion<T, K>
 }
 // ------------------------------------------------------------------
 // FromProperties
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromProperties<Properties extends TProperties, PropertyKeys extends PropertyKey[], UnionKeys extends PropertyKey = TupleToUnion<PropertyKeys>> = (
-  Evaluate<Pick<Properties, UnionKeys & keyof Properties>>
-)
+type FromProperties<T extends TProperties, K extends PropertyKey[], I extends PropertyKey = TupleToUnion<K>> = Evaluate<Pick<T, I & keyof T>>
 // prettier-ignore
-function FromProperties<Properties extends TProperties, PropertyKeys extends PropertyKey[]>(properties: Properties, propertyKeys: PropertyKeys): TFromProperties <Properties, PropertyKeys> {
-  const result = {} as TProperties
-  for(const K2 of propertyKeys) if(K2 in properties) result[K2 as TPropertyKey] = properties[K2 as keyof Properties]
-  return result as never
+function FromProperties<T extends TProperties, K extends PropertyKey[]>(T: T, K: K) {
+  const Acc = {} as TProperties
+  for(const K2 of K) if(K2 in T) Acc[K2 as TPropertyKey] = T[K2 as keyof T]
+  return Acc as never
 }
 // ------------------------------------------------------------------
-// FromObject
+// PickResolve
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromObject<_Type extends TObject, Keys extends PropertyKey[], Properties extends TProperties,
-  MappedProperties extends TProperties = TFromProperties<Properties, Keys>,
-  Result extends TSchema = TObject<MappedProperties>,
-> = Result
-// prettier-ignore
-function FromObject<Type extends TObject, keys extends PropertyKey[], Properties extends TProperties>
-  (Type: Type, keys: keys, properties: Properties): TFromObject<Type, keys, Properties> {
-  const options = Discard(Type, [TransformKind, '$id', 'required', 'properties'])
-  const mappedProperties = FromProperties(properties, keys)
-  return _Object_(mappedProperties, options) as never
+function PickResolve<T extends TSchema, K extends PropertyKey[]>(T: T, K: [...K]): TPick<T, K> {
+  return (
+    IsIntersect(T) ? Intersect(FromIntersect(T.allOf, K)) : 
+    IsUnion(T) ? Union(FromUnion(T.anyOf, K)) : 
+    IsObject(T) ? Object(FromProperties(T.properties, K)) : 
+    Object({})
+  ) as never
 }
-// ------------------------------------------------------------------
-// UnionFromPropertyKeys
-// ------------------------------------------------------------------
 // prettier-ignore
-type TUnionFromPropertyKeys<PropertyKeys extends PropertyKey[], Result extends TLiteral[] = []> = (
-  PropertyKeys extends [infer Key extends PropertyKey, ...infer Rest extends PropertyKey[]]
-    ? Key extends TLiteralValue
-      ? TUnionFromPropertyKeys<Rest, [...Result, TLiteral<Key>]>
-      : TUnionFromPropertyKeys<Rest, [...Result]>
-    : TUnion<Result>
-)
-// prettier-ignore
-function UnionFromPropertyKeys<PropertyKeys extends PropertyKey[]>(propertyKeys: PropertyKeys): TUnionFromPropertyKeys<PropertyKeys> {
-  const result = propertyKeys.reduce((result, key) => IsLiteralValue(key) ? [...result, Literal(key)]: result, [] as TLiteral[])
-  return Union(result) as never
-}
-// ------------------------------------------------------------------
-// TPickResolve
-// ------------------------------------------------------------------
-// prettier-ignore
-export type TPickResolve<Type extends TProperties, PropertyKeys extends PropertyKey[]> = (
-  Type extends TRecursive<infer Types extends TSchema> ? TRecursive<TPickResolve<Types, PropertyKeys>> : 
-  Type extends TIntersect<infer Types extends TSchema[]> ? TIntersect<TFromIntersect<Types, PropertyKeys>> : 
-  Type extends TUnion<infer Types  extends TSchema[]> ? TUnion<TFromUnion<Types, PropertyKeys>> : 
-  Type extends TObject<infer Properties extends TProperties> ? TFromObject<TObject, PropertyKeys, Properties> : 
+export type TPick<T extends TProperties, K extends PropertyKey[]> = 
+  T extends TRecursive<infer S> ? TRecursive<TPick<S, K>> : 
+  T extends TIntersect<infer S> ? TIntersect<FromIntersect<S, K>> : 
+  T extends TUnion<infer S> ? TUnion<FromUnion<S, K>> : 
+  T extends TObject<infer S> ? TObject<FromProperties<S, K>> : 
   TObject<{}>
-)
-// prettier-ignore
-function PickResolve<Type extends TSchema, PropertyKeys extends PropertyKey[]>
-  (type: Type, propertyKeys: [...PropertyKeys]): TPickResolve<Type, PropertyKeys> {
-  return (
-    IsIntersect(type) ? Intersect(FromIntersect(type.allOf, propertyKeys)) : 
-    IsUnion(type) ? Union(FromUnion(type.anyOf, propertyKeys)) : 
-    IsObject(type) ? FromObject(type, propertyKeys, type.properties) :
-    _Object_({})
-  ) as never
-}
-// ------------------------------------------------------------------
-// TPick
-//
-// This mapping logic is to overly complex because of the decision
-// to use PropertyKey[] as the default selector. The PropertyKey[]
-// did make TMapped types simpler to implement, but a non-TSchema
-// selector makes supporting TComputed awkward as it requires
-// generalization via TSchema. This type should be reimplemented
-// in the next major revision to support TSchema as the primary
-// selector.
-//
-// ------------------------------------------------------------------
-// prettier-ignore (do not export this type)
-type TResolvePropertyKeys<Key extends TSchema | PropertyKey[]> = Key extends TSchema ? TIndexPropertyKeys<Key> : Key
-// prettier-ignore (do not export this type)
-type TResolveTypeKey<Key extends TSchema | PropertyKey[]> = Key extends PropertyKey[] ? TUnionFromPropertyKeys<Key> : Key
-// prettier-ignore
-export type TPick<Type extends TSchema, Key extends TSchema | PropertyKey[],
-  IsTypeRef extends boolean = Type extends TRef ? true : false,
-  IsKeyRef extends boolean = Key extends TRef ? true : false,
-> = (
-  Type extends TMappedResult ? TPickFromMappedResult<Type, TResolvePropertyKeys<Key>> :
-  Key extends TMappedKey ? TPickFromMappedKey<Type, Key> :
-  [IsTypeRef, IsKeyRef] extends [true, true] ? TComputed<'Pick', [Type, TResolveTypeKey<Key>]> :
-  [IsTypeRef, IsKeyRef] extends [false, true] ? TComputed<'Pick', [Type, TResolveTypeKey<Key>]> :
-  [IsTypeRef, IsKeyRef] extends [true, false] ? TComputed<'Pick', [Type, TResolveTypeKey<Key>]> :
-  TPickResolve<Type, TResolvePropertyKeys<Key>>
-)
+
 /** `[Json]` Constructs a type whose keys are picked from the given type */
-export function Pick<Type extends TSchema, Key extends PropertyKey[]>(type: Type, key: readonly [...Key], options?: SchemaOptions): TPick<Type, Key>
+export function Pick<T extends TMappedResult, K extends PropertyKey[]>(T: T, K: [...K], options?: SchemaOptions): TPickFromMappedResult<T, K>
 /** `[Json]` Constructs a type whose keys are picked from the given type */
-export function Pick<Type extends TSchema, Key extends TSchema>(type: Type, key: Key, options?: SchemaOptions): TPick<Type, Key>
+export function Pick<T extends TSchema, K extends TMappedKey>(T: T, K: K, options?: SchemaOptions): TPickFromMappedKey<T, K>
 /** `[Json]` Constructs a type whose keys are picked from the given type */
-// prettier-ignore
-export function Pick(type: any, key: any, options?: SchemaOptions): any {
-  const typeKey: TSchema = IsArrayValue(key) ? UnionFromPropertyKeys(key as PropertyKey[]) : key 
-  const propertyKeys: PropertyKey[] = IsSchema(key) ? IndexPropertyKeys(key) : key
-  const isTypeRef: boolean = IsRef(type)
-  const isKeyRef: boolean = IsRef(key)
-  return (
-    IsMappedResult(type) ? PickFromMappedResult(type, propertyKeys, options) :
-    IsMappedKey(key) ? PickFromMappedKey(type, key, options) :
-    (isTypeRef && isKeyRef) ? Computed('Pick', [type, typeKey], options) :
-    (!isTypeRef && isKeyRef) ? Computed('Pick', [type, typeKey], options) :
-    (isTypeRef && !isKeyRef) ? Computed('Pick', [type, typeKey], options) :
-    CreateType({ ...PickResolve(type, propertyKeys), ...options })
-  ) as never
+export function Pick<T extends TSchema, K extends TSchema, I extends PropertyKey[] = TIndexPropertyKeys<K>>(T: T, K: K, options?: SchemaOptions): TPick<T, I>
+/** `[Json]` Constructs a type whose keys are picked from the given type */
+export function Pick<T extends TSchema, K extends PropertyKey[]>(T: T, K: readonly [...K], options?: SchemaOptions): TPick<T, K>
+export function Pick(T: TSchema, K: any, options: SchemaOptions = {}): any {
+  // mapped
+  if (IsMappedKey(K)) return PickFromMappedKey(T, K, options)
+  if (IsMappedResult(T)) return PickFromMappedResult(T, K, options)
+  // non-mapped
+  const I = IsSchema(K) ? IndexPropertyKeys(K) : (K as string[])
+  const D = Discard(T, [TransformKind, '$id', 'required']) as TSchema
+  const R = CloneType(PickResolve(T, I), options)
+  return { ...D, ...R }
 }

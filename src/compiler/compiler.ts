@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 import { TransformEncode, TransformDecode, HasTransform, TransformDecodeCheckError, TransformEncodeCheckError } from '../value/transform/index'
 import { Errors, ValueErrorIterator } from '../errors/index'
-import { TypeSystemPolicy, Evaluate } from '../system/index'
+import { TypeSystemPolicy } from '../system/index'
 import { TypeBoxError } from '../type/error/index'
 import { Deref } from '../value/deref/index'
 import { Hash } from '../value/hash/index'
@@ -41,14 +41,12 @@ import { ExtendsUndefinedCheck } from '../type/extends/extends-undefined'
 import type { TSchema } from '../type/schema/index'
 import type { TAsyncIterator } from '../type/async-iterator/index'
 import type { TAny } from '../type/any/index'
-import type { TArgument } from '../type/argument/index'
 import type { TArray } from '../type/array/index'
 import type { TBigInt } from '../type/bigint/index'
 import type { TBoolean } from '../type/boolean/index'
 import type { TDate } from '../type/date/index'
 import type { TConstructor } from '../type/constructor/index'
 import type { TFunction } from '../type/function/index'
-import type { TImport } from '../type/module/index'
 import type { TInteger } from '../type/integer/index'
 import type { TIntersect } from '../type/intersect/index'
 import type { TIterator } from '../type/iterator/index'
@@ -60,7 +58,7 @@ import type { TNumber } from '../type/number/index'
 import type { TObject } from '../type/object/index'
 import type { TPromise } from '../type/promise/index'
 import type { TRecord } from '../type/record/index'
-import { Ref, type TRef } from '../type/ref/index'
+import type { TRef } from '../type/ref/index'
 import type { TRegExp } from '../type/regexp/index'
 import type { TTemplateLiteral } from '../type/template-literal/index'
 import type { TThis } from '../type/recursive/index'
@@ -73,7 +71,6 @@ import type { TSymbol } from '../type/symbol/index'
 import type { TUndefined } from '../type/undefined/index'
 import type { TUint8Array } from '../type/uint8array/index'
 import type { TVoid } from '../type/void/index'
-
 // ------------------------------------------------------------------
 // ValueGuard
 // ------------------------------------------------------------------
@@ -98,14 +95,6 @@ export class TypeCheck<T extends TSchema> {
   public Code(): string {
     return this.code
   }
-  /** Returns the schema type used to validate */
-  public Schema(): T {
-    return this.schema
-  }
-  /** Returns reference types used to validate */
-  public References(): TSchema[] {
-    return this.references
-  }
   /** Returns an iterator for each error in this value. */
   public Errors(value: unknown): ValueErrorIterator {
     return Errors(this.schema, this.references, value)
@@ -115,15 +104,15 @@ export class TypeCheck<T extends TSchema> {
     return this.checkFunc(value)
   }
   /** Decodes a value or throws if error */
-  public Decode<Static = StaticDecode<T>, Result extends Static = Static>(value: unknown): Result {
+  public Decode(value: unknown): StaticDecode<T> {
     if (!this.checkFunc(value)) throw new TransformDecodeCheckError(this.schema, value, this.Errors(value).First()!)
-    return (this.hasTransform ? TransformDecode(this.schema, this.references, value) : value) as never
+    return this.hasTransform ? TransformDecode(this.schema, this.references, value) : value
   }
   /** Encodes a value or throws if error */
-  public Encode<Static = StaticEncode<T>, Result extends Static = Static>(value: unknown): Result {
+  public Encode(value: unknown): StaticEncode<T> {
     const encoded = this.hasTransform ? TransformEncode(this.schema, this.references, value) : value
     if (!this.checkFunc(encoded)) throw new TransformEncodeCheckError(this.schema, value, this.Errors(value).First()!)
-    return encoded as never
+    return encoded
   }
 }
 // ------------------------------------------------------------------
@@ -144,18 +133,6 @@ namespace Character {
   }
 }
 // ------------------------------------------------------------------
-// StringUtil
-// ------------------------------------------------------------------
-export namespace StringUtil {
-  /**
-   * Unquoted string values are embedded into single-quote string. This
-   * function ensures that embedded string cannot be escaped.
-   */
-  export function EscapeSingleQuote(value: string): string {
-    return JSON.stringify(value).slice(1, -1).replace(/'/g, "\\'")
-  }
-}
-// ------------------------------------------------------------------
 // MemberExpression
 // ------------------------------------------------------------------
 namespace MemberExpression {
@@ -173,7 +150,7 @@ namespace MemberExpression {
     return true
   }
   function EscapeHyphen(key: string) {
-    return StringUtil.EscapeSingleQuote(key)
+    return key.replace(/'/g, "\\'")
   }
   export function Encode(object: string, key: string) {
     return IsAccessor(key) ? `${object}.${key}` : `${object}['${EscapeHyphen(key)}']`
@@ -201,7 +178,7 @@ namespace Identifier {
 // ------------------------------------------------------------------
 namespace LiteralString {
   export function Escape(content: string) {
-    return StringUtil.EscapeSingleQuote(content)
+    return content.replace(/'/g, "\\'")
   }
 }
 // ------------------------------------------------------------------
@@ -260,17 +237,13 @@ export namespace TypeCompiler {
   function* FromAny(schema: TAny, references: TSchema[], value: string): IterableIterator<string> {
     yield 'true'
   }
-  function* FromArgument(schema: TArgument, references: TSchema[], value: string): IterableIterator<string> {
-    yield 'true'
-  }
   function* FromArray(schema: TArray, references: TSchema[], value: string): IterableIterator<string> {
     yield `Array.isArray(${value})`
     const [parameter, accumulator] = [CreateParameter('value', 'any'), CreateParameter('acc', 'number')]
     if (IsNumber(schema.maxItems)) yield `${value}.length <= ${schema.maxItems}`
     if (IsNumber(schema.minItems)) yield `${value}.length >= ${schema.minItems}`
     const elementExpression = CreateExpression(schema.items, references, 'value')
-    // yield `${value}.every((${parameter}) => ${elementExpression})` // issue: 1519
-    yield `((array) => { for(const ${parameter} of array) if(!(${elementExpression})) { return false }; return true; })(${value})`
+    yield `${value}.every((${parameter}) => ${elementExpression})`
     if (IsSchema(schema.contains) || IsNumber(schema.minContains) || IsNumber(schema.maxContains)) {
       const containsSchema = IsSchema(schema.contains) ? schema.contains : Never()
       const checkExpression = CreateExpression(containsSchema, references, 'value')
@@ -313,12 +286,6 @@ export namespace TypeCompiler {
   }
   function* FromFunction(schema: TFunction, references: TSchema[], value: string): IterableIterator<string> {
     yield `(typeof ${value} === 'function')`
-  }
-  function* FromImport(schema: TImport, references: TSchema[], value: string): IterableIterator<string> {
-    const members = globalThis.Object.getOwnPropertyNames(schema.$defs).reduce((result, key) => {
-      return [...result, schema.$defs[key as never] as TSchema]
-    }, [] as TSchema[])
-    yield* Visit(Ref(schema.$ref), [...references, ...members], value)
   }
   function* FromInteger(schema: TInteger, references: TSchema[], value: string): IterableIterator<string> {
     yield `Number.isInteger(${value})`
@@ -401,7 +368,7 @@ export namespace TypeCompiler {
     }
   }
   function* FromPromise(schema: TPromise, references: TSchema[], value: string): IterableIterator<string> {
-    yield `${value} instanceof Promise`
+    yield `(typeof value === 'object' && typeof ${value}.then === 'function')`
   }
   function* FromRecord(schema: TRecord, references: TSchema[], value: string): IterableIterator<string> {
     yield Policy.IsRecordLike(value)
@@ -495,10 +462,6 @@ export namespace TypeCompiler {
       if (state.functions.has(functionName)) {
         return yield `${functionName}(${value})`
       } else {
-        // Note: In the case of cyclic types, we need to create a 'functions' record
-        // to prevent infinitely re-visiting the CreateFunction. Subsequent attempts
-        // to visit will be caught by the above condition.
-        state.functions.set(functionName, '<deferred>')
         const functionCode = CreateFunction(functionName, schema, references, 'value', false)
         state.functions.set(functionName, functionCode)
         return yield `${functionName}(${value})`
@@ -507,8 +470,6 @@ export namespace TypeCompiler {
     switch (schema_[Kind]) {
       case 'Any':
         return yield* FromAny(schema_, references_, value)
-      case 'Argument':
-        return yield* FromArgument(schema_, references_, value)
       case 'Array':
         return yield* FromArray(schema_, references_, value)
       case 'AsyncIterator':
@@ -523,8 +484,6 @@ export namespace TypeCompiler {
         return yield* FromDate(schema_, references_, value)
       case 'Function':
         return yield* FromFunction(schema_, references_, value)
-      case 'Import':
-        return yield* FromImport(schema_, references_, value)
       case 'Integer':
         return yield* FromInteger(schema_, references_, value)
       case 'Intersect':
@@ -629,9 +588,6 @@ export namespace TypeCompiler {
       : `return ${functionCode}`
     return [...variables, ...functions, checkFunction].join('\n')
   }
-  // ----------------------------------------------------------------
-  // Code
-  // ----------------------------------------------------------------
   /** Generates the code used to assert this type and returns it as a string */
   export function Code<T extends TSchema>(schema: T, references: TSchema[], options?: TypeCompilerCodegenOptions): string
   /** Generates the code used to assert this type and returns it as a string */
@@ -659,7 +615,7 @@ export namespace TypeCompiler {
   /** Compiles a TypeBox type for optimal runtime type checking. Types must be valid TypeBox types of TSchema */
   export function Compile<T extends TSchema>(schema: T, references: TSchema[] = []): TypeCheck<T> {
     const generatedCode = Code(schema, references, { language: 'javascript' })
-    const compiledFunction = Evaluate('kind', 'format', 'hash', generatedCode)
+    const compiledFunction = globalThis.Function('kind', 'format', 'hash', generatedCode)
     const instances = new Map(state.instances)
     function typeRegistryFunction(kind: string, instance: number, value: unknown) {
       if (!TypeRegistry.Has(kind) || !instances.has(instance)) return false

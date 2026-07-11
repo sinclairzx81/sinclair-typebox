@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 import { Kind } from '../../type/symbols/index'
 
 import type { TSchema } from '../../type/schema/index'
@@ -36,7 +36,6 @@ import type { TConstructor } from '../../type/constructor/index'
 import type { TFunction } from '../../type/function/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TIterator } from '../../type/iterator/index'
-import type { TImport } from '../../type/module/index'
 import type { TNot } from '../../type/not/index'
 import type { TObject } from '../../type/object/index'
 import type { TPromise } from '../../type/promise/index'
@@ -47,13 +46,13 @@ import type { TTuple } from '../../type/tuple/index'
 import type { TUnion } from '../../type/union/index'
 
 // ------------------------------------------------------------------
-// KindGuard
+// TypeGuard
 // ------------------------------------------------------------------
-import { IsTransform, IsSchema } from '../../type/guard/kind'
+import { IsTransform, IsSchema } from '../../type/guard/type'
 // ------------------------------------------------------------------
 // ValueGuard
 // ------------------------------------------------------------------
-import { IsUndefined } from '../guard/index'
+import { IsString, IsUndefined } from '../guard/index'
 
 // prettier-ignore
 function FromArray(schema: TArray, references: TSchema[]): boolean {
@@ -74,12 +73,6 @@ function FromFunction(schema: TFunction, references: TSchema[]) {
 // prettier-ignore
 function FromIntersect(schema: TIntersect, references: TSchema[]) {
   return IsTransform(schema) || IsTransform(schema.unevaluatedProperties) || schema.allOf.some((schema) => Visit(schema, references))
-}
-// prettier-ignore
-function FromImport(schema: TImport, references: TSchema[]) {
-  const additional = globalThis.Object.getOwnPropertyNames(schema.$defs).reduce((result, key) => [...result, schema.$defs[key as never]], [] as TSchema[])
-  const target = schema.$defs[schema.$ref]
-  return IsTransform(schema) || Visit(target, [...additional, ...references]) 
 }
 // prettier-ignore
 function FromIterator(schema: TIterator, references: TSchema[]) {
@@ -129,7 +122,7 @@ function FromUnion(schema: TUnion, references: TSchema[]) {
 }
 // prettier-ignore
 function Visit(schema: TSchema, references: TSchema[]): boolean {
-  const references_ = Pushref(schema, references)
+  const references_ = IsString(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   if (schema.$id && visited.has(schema.$id)) return false
   if (schema.$id) visited.add(schema.$id)
@@ -142,8 +135,6 @@ function Visit(schema: TSchema, references: TSchema[]): boolean {
       return FromConstructor(schema_, references_)
     case 'Function':
       return FromFunction(schema_, references_)
-    case 'Import':
-      return FromImport(schema_, references_)
     case 'Intersect':
       return FromIntersect(schema_, references_)
     case 'Iterator':

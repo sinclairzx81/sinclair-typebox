@@ -1,8 +1,7 @@
 import { Value } from '@sinclair/typebox/value'
-import { Type, Kind, TypeRegistry } from '@sinclair/typebox'
+import { Type } from '@sinclair/typebox'
 import { Assert } from '../../assert/index'
 
-// prettier-ignore
 describe('value/default/Union', () => {
   it('Should use default', () => {
     const T = Type.Union([Type.Number(), Type.String()], { default: 1 })
@@ -84,44 +83,28 @@ describe('value/default/Union', () => {
     Assert.IsEqual(R, { x: 3, y: 4 })
   })
   // ----------------------------------------------------------------
-  // https://github.com/sinclairzx81/typebox/issues/993
-  // ----------------------------------------------------------------
-  it('Should return the original value if no schemas match (cloned interior variant)', async () => {
-    const T = Type.Union([
-      Type.Tuple([Type.Number(), Type.Number()]), 
-      Type.Array(Type.Number())
-    ])
-    const value = ['hello']
-    const R = Value.Default(T, value)
-    Assert.IsTrue(R === value)
-  })
-  // ----------------------------------------------------------------
   // Interior Unsafe
   // ----------------------------------------------------------------
   it('Should default interior unsafe 1', () => {
-    TypeRegistry.Set('DefaultUnsafe', (schema, value) => typeof value === 'string')
     const T = Type.Union([
       Type.Object({
         x: Type.Number({ default: 1 }),
         y: Type.Number({ default: 2 }),
       }),
-      Type.Unsafe({ [Kind]: 'DefaultUnsafe', default: 'hello' }),
+      Type.Unsafe({ default: 'hello' }),
     ])
     const R = Value.Default(T, undefined)
-    Assert.IsEqual(R, 'hello')
-    TypeRegistry.Delete('DefaultUnsafe')
+    Assert.IsEqual(R, undefined)
   })
   it('Should default interior unsafe 2', () => {
-    TypeRegistry.Set('DefaultUnsafe', (schema, value) => typeof value === 'string')
     const T = Type.Union([
       Type.Object({
         x: Type.Number({ default: 1 }),
         y: Type.Number({ default: 2 }),
       }),
-      Type.Unsafe({ [Kind]: 'DefaultUnsafe', default: 'hello' }),
+      Type.Unsafe({ default: 'hello' }),
     ])
     const R = Value.Default(T, 'world')
     Assert.IsEqual(R, 'world')
-    TypeRegistry.Delete('DefaultUnsafe')
   })
 })

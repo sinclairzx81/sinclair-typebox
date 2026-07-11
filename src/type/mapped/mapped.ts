@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ THE SOFTWARE.
 import type { TSchema } from '../schema/index'
 import type { Ensure, Evaluate, Assert } from '../helpers/index'
 import { Kind, OptionalKind, ReadonlyKind } from '../symbols/index'
-import { CreateType } from '../create/type'
+import { CloneType } from '../clone/type'
 import { Discard } from '../discard/index'
 // evaluation types
 import { Array, type TArray } from '../array/index'
@@ -41,7 +41,7 @@ import { IndexPropertyKeys, type TIndexPropertyKeys } from '../indexed/index'
 import { Intersect, type TIntersect } from '../intersect/index'
 import { Iterator, type TIterator } from '../iterator/index'
 import { Literal, type TLiteral, type TLiteralValue } from '../literal/index'
-import { Object as _Object_, type TObject, type TProperties, type ObjectOptions } from '../object/index'
+import { Object, type TObject, type TProperties, type ObjectOptions } from '../object/index'
 import { Optional, type TOptional } from '../optional/index'
 import { Promise, type TPromise } from '../promise/index'
 import { Readonly, type TReadonly } from '../readonly/index'
@@ -205,8 +205,6 @@ type FromSchemaType<K extends PropertyKey, T extends TSchema> = (
 )
 // prettier-ignore
 function FromSchemaType<K extends PropertyKey, T extends TSchema>(K: K, T: T): FromSchemaType<K, T> {
-  // required to retain user defined options for mapped type
-  const options = { ...T }
   return (
     // unevaluated modifier types
     IsOptional(T) ? Optional(FromSchemaType(K, Discard(T, [OptionalKind]) as TSchema)) :
@@ -215,16 +213,16 @@ function FromSchemaType<K extends PropertyKey, T extends TSchema>(K: K, T: T): F
     IsMappedResult(T) ? FromMappedResult(K, T.properties) :
     IsMappedKey(T) ? FromMappedKey(K, T.keys) :
     // unevaluated types
-    IsConstructor(T) ? Constructor(FromRest(K, T.parameters), FromSchemaType(K, T.returns), options) :
-    IsFunction(T) ? FunctionType(FromRest(K, T.parameters), FromSchemaType(K, T.returns), options) :
-    IsAsyncIterator(T) ? AsyncIterator(FromSchemaType(K, T.items), options) :
-    IsIterator(T) ? Iterator(FromSchemaType(K, T.items), options) :
-    IsIntersect(T) ? Intersect(FromRest(K, T.allOf), options) :
-    IsUnion(T) ? Union(FromRest(K, T.anyOf), options) :
-    IsTuple(T) ? Tuple(FromRest(K, T.items ?? []), options) :
-    IsObject(T) ? _Object_(FromProperties(K, T.properties), options) :
-    IsArray(T) ? Array(FromSchemaType(K, T.items), options) :
-    IsPromise(T) ? Promise(FromSchemaType(K, T.item), options) :
+    IsConstructor(T) ? Constructor(FromRest(K, T.parameters), FromSchemaType(K, T.returns)) :
+    IsFunction(T) ? FunctionType(FromRest(K, T.parameters), FromSchemaType(K, T.returns)) :
+    IsAsyncIterator(T) ? AsyncIterator(FromSchemaType(K, T.items)) :
+    IsIterator(T) ? Iterator(FromSchemaType(K, T.items)) :
+    IsIntersect(T) ? Intersect(FromRest(K, T.allOf)) :
+    IsUnion(T) ? Union(FromRest(K, T.anyOf)) :
+    IsTuple(T) ? Tuple(FromRest(K, T.items ?? [])) :
+    IsObject(T) ? Object(FromProperties(K, T.properties)) :
+    IsArray(T) ? Array(FromSchemaType(K, T.items)) :
+    IsPromise(T) ? Promise(FromSchemaType(K, T.item)) :
     T
   ) as never
 }
@@ -263,9 +261,9 @@ export function Mapped<K extends TSchema, I extends PropertyKey[] = TIndexProper
 /** `[Json]` Creates a Mapped object type */
 export function Mapped<K extends PropertyKey[], F extends TMappedFunction<K> = TMappedFunction<K>, R extends TMapped<K, F> = TMapped<K, F>>(key: [...K], map: F, options?: ObjectOptions): R
 /** `[Json]` Creates a Mapped object type */
-export function Mapped(key: any, map: Function, options?: ObjectOptions) {
+export function Mapped(key: any, map: Function, options: ObjectOptions = {}) {
   const K = IsSchema(key) ? IndexPropertyKeys(key) : (key as PropertyKey[])
   const RT = map({ [Kind]: 'MappedKey', keys: K } as TMappedKey)
   const R = MappedFunctionReturnType(K, RT)
-  return _Object_(R, options)
+  return CloneType(Object(R), options)
 }

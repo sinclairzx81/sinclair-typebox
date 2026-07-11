@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 import { TSchema } from '../type/schema/index'
 import { Kind } from '../type/symbols/index'
-import { ValueErrorIterator, ValueErrorType } from './errors'
+import { ValueErrorType } from './errors'
 
 /** Creates an error message using en-US as the default locale */
 export function DefaultErrorFunction(error: ErrorFunctionParameter) {
@@ -178,8 +178,6 @@ export type ErrorFunctionParameter = {
   schema: TSchema
   /** The value associated with the error */
   value: unknown
-  /** Interior errors for this error */
-  errors: ValueErrorIterator[]
 }
 export type ErrorFunction = (parameter: ErrorFunctionParameter) => string
 /** Manages error message providers */

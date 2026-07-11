@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,16 +26,16 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import type { ObjectType as FromObject, ArrayType as FromArray, TypedArrayType, ValueType } from '../guard/index'
+import type { ObjectType, ArrayType, TypedArrayType, ValueType } from '../guard/index'
 
 // ------------------------------------------------------------------
 // ValueGuard
 // ------------------------------------------------------------------
-import { IsArray, IsDate, IsMap, IsSet, IsObject, IsTypedArray, IsValueType } from '../guard/index'
+import { IsArray, IsDate, IsStandardObject, IsTypedArray, IsValueType } from '../guard/index'
 // ------------------------------------------------------------------
 // Clonable
 // ------------------------------------------------------------------
-function FromObject(value: FromObject): any {
+function ObjectType(value: ObjectType): any {
   const Acc = {} as Record<PropertyKey, unknown>
   for (const key of Object.getOwnPropertyNames(value)) {
     Acc[key] = Clone(value[key])
@@ -45,22 +45,16 @@ function FromObject(value: FromObject): any {
   }
   return Acc
 }
-function FromArray(value: FromArray): any {
+function ArrayType(value: ArrayType): any {
   return value.map((element: any) => Clone(element))
 }
-function FromTypedArray(value: TypedArrayType): any {
+function TypedArrayType(value: TypedArrayType): any {
   return value.slice()
 }
-function FromMap(value: Map<unknown, unknown>): any {
-  return new Map(Clone([...value.entries()]))
-}
-function FromSet(value: Set<unknown>): any {
-  return new Set(Clone([...value.entries()]))
-}
-function FromDate(value: Date): any {
+function DateType(value: Date): any {
   return new Date(value.toISOString())
 }
-function FromValue(value: ValueType): any {
+function ValueType(value: ValueType): any {
   return value
 }
 // ------------------------------------------------------------------
@@ -68,12 +62,10 @@ function FromValue(value: ValueType): any {
 // ------------------------------------------------------------------
 /** Returns a clone of the given value */
 export function Clone<T extends unknown>(value: T): T {
-  if (IsArray(value)) return FromArray(value)
-  if (IsDate(value)) return FromDate(value)
-  if (IsTypedArray(value)) return FromTypedArray(value)
-  if (IsMap(value)) return FromMap(value)
-  if (IsSet(value)) return FromSet(value)
-  if (IsObject(value)) return FromObject(value)
-  if (IsValueType(value)) return FromValue(value)
+  if (IsArray(value)) return ArrayType(value)
+  if (IsDate(value)) return DateType(value)
+  if (IsStandardObject(value)) return ObjectType(value)
+  if (IsTypedArray(value)) return TypedArrayType(value)
+  if (IsValueType(value)) return ValueType(value)
   throw new Error('ValueClone: Unable to clone value')
 }

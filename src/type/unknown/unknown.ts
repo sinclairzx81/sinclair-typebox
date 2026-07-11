@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
 
@@ -35,6 +34,9 @@ export interface TUnknown extends TSchema {
   static: unknown
 }
 /** `[Json]` Creates an Unknown type */
-export function Unknown(options?: SchemaOptions): TUnknown {
-  return CreateType({ [Kind]: 'Unknown' }, options) as never
+export function Unknown(options: SchemaOptions = {}): TUnknown {
+  return {
+    ...options,
+    [Kind]: 'Unknown',
+  } as never
 }

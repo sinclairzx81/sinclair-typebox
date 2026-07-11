@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,62 +31,73 @@ import type { Ensure, Evaluate } from '../helpers/index'
 import type { TProperties } from '../object/index'
 import { Index, type TIndex } from './indexed'
 import { MappedResult, type TMappedResult, type TMappedKey } from '../mapped/index'
-import { Clone } from '../clone/value'
 
 // ------------------------------------------------------------------
 // MappedIndexPropertyKey
 // ------------------------------------------------------------------
 // prettier-ignore
-type TMappedIndexPropertyKey<Type extends TSchema, Key extends PropertyKey> = {
-  [_ in Key]: TIndex<Type, [Key]>
+type TMappedIndexPropertyKey<
+  T extends TSchema, 
+  K extends PropertyKey
+> = {
+  [_ in K]: TIndex<T, [K]>
 }
 // prettier-ignore
-function MappedIndexPropertyKey<Type extends TSchema, Key extends PropertyKey>(type: Type, key: Key, options?: SchemaOptions): TMappedIndexPropertyKey<Type, Key> {
-  return { [key]: Index(type, [key], Clone(options)) } as never
+function MappedIndexPropertyKey<
+  T extends TSchema, 
+  K extends PropertyKey
+>(T: T, K: K, options: SchemaOptions): TMappedIndexPropertyKey<T, K> {
+  return { [K]: Index(T, [K], options) } as never
 }
 // ------------------------------------------------------------------
 // MappedIndexPropertyKeys
 // ------------------------------------------------------------------
 // prettier-ignore
-type TMappedIndexPropertyKeys<Type extends TSchema, PropertyKeys extends PropertyKey[], Result extends TProperties = {}> = (
-  PropertyKeys extends [infer Left extends PropertyKey, ...infer Right extends PropertyKey[]]
-    ? TMappedIndexPropertyKeys<Type, Right, Result & TMappedIndexPropertyKey<Type, Left>>
-    : Result
+type TMappedIndexPropertyKeys<T extends TSchema, K extends PropertyKey[], Acc extends TProperties = {}> = (
+  K extends [infer L extends PropertyKey, ...infer R extends PropertyKey[]]
+    ? TMappedIndexPropertyKeys<T, R, Acc & TMappedIndexPropertyKey<T, L>>
+    : Acc
 )
 // prettier-ignore
 function MappedIndexPropertyKeys<
-  Type extends TSchema, 
-  PropertyKeys extends PropertyKey[]
->(type: Type, propertyKeys: [...PropertyKeys], options?: SchemaOptions): TMappedIndexPropertyKeys<Type, PropertyKeys> {
-  return propertyKeys.reduce((result, left) => {
-    return { ...result, ...MappedIndexPropertyKey(type, left, options) }
+  T extends TSchema, 
+  K extends PropertyKey[]
+>(T: T, K: [...K], options: SchemaOptions): TMappedIndexPropertyKeys<T, K> {
+  return K.reduce((Acc, L) => {
+    return { ...Acc, ...MappedIndexPropertyKey(T, L, options) }
   }, {} as TProperties) as never
 }
 // ------------------------------------------------------------------
 // MappedIndexProperties
 // ------------------------------------------------------------------
 // prettier-ignore
-type TMappedIndexProperties<Type extends TSchema, MappedKey extends TMappedKey> = Evaluate<
-  TMappedIndexPropertyKeys<Type, MappedKey['keys']>
+type TMappedIndexProperties<T extends TSchema, K extends TMappedKey> = Evaluate<
+  TMappedIndexPropertyKeys<T, K['keys']>
 >
 // prettier-ignore
-function MappedIndexProperties<Type extends TSchema, MappedKey extends TMappedKey
->(type: Type, mappedKey: MappedKey, options?: SchemaOptions): TMappedIndexProperties<Type, MappedKey> {
-  return MappedIndexPropertyKeys(type, mappedKey.keys, options) as never
+function MappedIndexProperties<
+  T extends TSchema, 
+  K extends TMappedKey
+>(T: T, K: K, options: SchemaOptions): TMappedIndexProperties<T, K> {
+  return MappedIndexPropertyKeys(T, K.keys, options) as never
 }
 // ------------------------------------------------------------------
 // TIndexFromMappedKey
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TIndexFromMappedKey<Type extends TSchema, MappedKey extends TMappedKey, 
-  Properties extends TProperties = TMappedIndexProperties<Type, MappedKey>
+export type TIndexFromMappedKey<
+  T extends TSchema, 
+  K extends TMappedKey, 
+  P extends TProperties = TMappedIndexProperties<T, K>
 > = (
-  Ensure<TMappedResult<Properties>>
+  Ensure<TMappedResult<P>>
 )
 // prettier-ignore
-export function IndexFromMappedKey<Type extends TSchema, MappedKey extends TMappedKey, 
-  Properties extends TProperties = TMappedIndexProperties<Type, MappedKey>
->(type: Type, mappedKey: MappedKey, options?: SchemaOptions): TMappedResult<Properties> {
-  const properties = MappedIndexProperties(type, mappedKey, options)
-  return MappedResult(properties) as never
+export function IndexFromMappedKey<
+  T extends TSchema, 
+  K extends TMappedKey, 
+  P extends TProperties = TMappedIndexProperties<T, K>
+>(T: T, K: K, options: SchemaOptions): TMappedResult<P> {
+  const P = MappedIndexProperties(T, K, options)
+  return MappedResult(P) as never
 }

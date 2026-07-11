@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ import type { TSchema } from '../schema/index'
 import type { TIntersect } from '../intersect/index'
 import type { TUnion } from '../union/index'
 import type { TTuple } from '../tuple/index'
+import { CloneRest } from '../clone/type'
 
 // ------------------------------------------------------------------
 // TypeGuard
@@ -40,16 +41,16 @@ import { IsIntersect, IsUnion, IsTuple } from '../guard/kind'
 // ------------------------------------------------------------------
 // prettier-ignore
 type TRestResolve<T extends TSchema> = 
-  T extends TIntersect<infer S extends TSchema[]> ? S : 
-  T extends TUnion<infer S extends TSchema[]> ? S : 
-  T extends TTuple<infer S extends TSchema[]> ? S : 
+  T extends TIntersect<infer S> ? [...S] : 
+  T extends TUnion<infer S> ? [...S] : 
+  T extends TTuple<infer S> ? [...S] : 
   []
 // prettier-ignore
 function RestResolve<T extends TSchema>(T: T) {
   return (
-    IsIntersect(T) ? T.allOf : 
-    IsUnion(T) ? T.anyOf : 
-    IsTuple(T) ? T.items ?? [] : 
+    IsIntersect(T) ? CloneRest(T.allOf) : 
+    IsUnion(T) ? CloneRest(T.anyOf) : 
+    IsTuple(T) ? CloneRest(T.items ?? []) : 
     []
   ) as never
 }
@@ -60,5 +61,5 @@ export type TRest<T extends TSchema> = TRestResolve<T>
 
 /** `[Json]` Extracts interior Rest elements from Tuple, Intersect and Union types */
 export function Rest<T extends TSchema>(T: T): TRest<T> {
-  return RestResolve(T)
+  return CloneRest(RestResolve(T))
 }

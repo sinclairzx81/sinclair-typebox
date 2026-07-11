@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@ THE SOFTWARE.
 // Type: Module
 // ------------------------------------------------------------------
 export { Any } from '../any/index'
-export { Argument } from '../argument/index'
 export { Array } from '../array/index'
 export { AsyncIterator } from '../async-iterator/index'
 export { Awaited } from '../awaited/index'
@@ -41,6 +40,7 @@ export { Const } from '../const/index'
 export { Constructor } from '../constructor/index'
 export { ConstructorParameters } from '../constructor-parameters/index'
 export { Date } from '../date/index'
+export { Deref } from '../deref/index'
 export { Enum } from '../enum/index'
 export { Exclude } from '../exclude/index'
 export { Extends } from '../extends/index'
@@ -48,7 +48,6 @@ export { Extract } from '../extract/index'
 export { Function } from '../function/index'
 export { Index } from '../indexed/index'
 export { InstanceType } from '../instance-type/index'
-export { Instantiate } from '../instantiate/index'
 export { Integer } from '../integer/index'
 export { Intersect } from '../intersect/index'
 export { Capitalize, Uncapitalize, Lowercase, Uppercase } from '../intrinsic/index'
@@ -56,7 +55,6 @@ export { Iterator } from '../iterator/index'
 export { KeyOf } from '../keyof/index'
 export { Literal } from '../literal/index'
 export { Mapped } from '../mapped/index'
-export { Module } from '../module/index'
 export { Never } from '../never/index'
 export { Not } from '../not/index'
 export { Null } from '../null/index'
@@ -77,6 +75,7 @@ export { RegExp } from '../regexp/index'
 export { Required } from '../required/index'
 export { Rest } from '../rest/index'
 export { ReturnType } from '../return-type/index'
+export { Strict } from '../strict/index'
 export { String } from '../string/index'
 export { Symbol } from '../symbol/index'
 export { TemplateLiteral } from '../template-literal/index'

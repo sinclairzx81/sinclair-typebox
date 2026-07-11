@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
 
@@ -39,5 +38,8 @@ export interface TUnsafe<T> extends TSchema {
 }
 /** `[Json]` Creates a Unsafe type that will infers as the generic argument T */
 export function Unsafe<T>(options: UnsafeOptions = {}): TUnsafe<T> {
-  return CreateType({ [Kind]: options[Kind] ?? 'Unsafe' }, options) as never
+  return {
+    ...options,
+    [Kind]: options[Kind] ?? 'Unsafe',
+  } as never
 }

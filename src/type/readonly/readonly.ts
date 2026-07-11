@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,10 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema } from '../schema/index'
 import type { Ensure } from '../helpers/index'
 import { ReadonlyKind } from '../symbols/index'
+import { CloneType } from '../clone/type'
 import { Discard } from '../discard/index'
 import type { TMappedResult } from '../mapped/index'
 
@@ -40,14 +40,14 @@ import { IsMappedResult } from '../guard/kind'
 // ------------------------------------------------------------------
 type TRemoveReadonly<T extends TSchema> = T extends TReadonly<infer S> ? S : T
 function RemoveReadonly<T extends TSchema>(schema: T) {
-  return CreateType(Discard(schema, [ReadonlyKind]))
+  return Discard(CloneType(schema), [ReadonlyKind])
 }
 // ------------------------------------------------------------------
 // AddReadonly
 // ------------------------------------------------------------------
 type TAddReadonly<T extends TSchema> = T extends TReadonly<infer S> ? TReadonly<S> : Ensure<TReadonly<T>>
 function AddReadonly<T extends TSchema>(schema: T) {
-  return CreateType({ ...schema, [ReadonlyKind]: 'Readonly' })
+  return { ...CloneType(schema), [ReadonlyKind]: 'Readonly' }
 }
 // prettier-ignore
 export type TReadonlyWithFlag<T extends TSchema, F extends boolean> = 

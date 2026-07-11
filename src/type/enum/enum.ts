@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ export interface TEnum<T extends Record<string, string | number> = Record<string
   anyOf: TLiteral<T[keyof T]>[]
 }
 /** `[Json]` Creates a Enum type */
-export function Enum<V extends TEnumValue, T extends Record<TEnumKey, V>>(item: T, options?: SchemaOptions): TEnum<T> {
+export function Enum<V extends TEnumValue, T extends Record<TEnumKey, V>>(item: T, options: SchemaOptions = {}): TEnum<T> {
   if (IsUndefined(item)) throw new Error('Enum undefined or empty')
   const values1 = globalThis.Object.getOwnPropertyNames(item)
     .filter((key) => isNaN(key as any))

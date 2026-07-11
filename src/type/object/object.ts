@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,18 +26,18 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import type { Static } from '../static/index'
-import type { Evaluate, UnionToTuple } from '../helpers/index'
+import type { Evaluate } from '../helpers/index'
 import type { TReadonly } from '../readonly/index'
 import type { TOptional } from '../optional/index'
+import { CloneType } from '../clone/type'
 import { Kind } from '../symbols/index'
 
 // ------------------------------------------------------------------
 // TypeGuard
 // ------------------------------------------------------------------
-import { IsOptional } from '../guard/kind'
+import { IsOptional, IsSchema } from '../guard/kind'
 
 // ------------------------------------------------------------------
 // ObjectStatic
@@ -64,43 +64,6 @@ type ObjectStatic<T extends TProperties, P extends unknown[]> = ObjectStaticProp
 export type TPropertyKey = string | number // Consider making this PropertyKey
 export type TProperties = Record<TPropertyKey, TSchema>
 // ------------------------------------------------------------------
-// TRequiredArray
-//
-// Note: Generating the RequiredArray from TProperties enables TB 1.0
-// to infer TObject via the XSchema inference path. The string[] |
-// undefined fallback ensures that TObject remains covariant with
-// varying TObject<X> instances.
-//
-// ------------------------------------------------------------------
-// prettier-ignore
-type TIsLiteralString<Type extends string> = (
-  [Type] extends [string]
-    ? [string] extends [Type]
-      ? false
-      : true
-    : false
-)
-// prettier-ignore
-type IsRequiredArrayLiteralConstant<RequiredTuple extends string[]> = (
-  RequiredTuple extends [infer Left extends string, ...infer _ extends string[]]
-    ? TIsLiteralString<Left>
-    : false
-)
-// prettier-ignore
-type TRequiredArray<Properties extends TProperties,
-  RequiredProperties extends TProperties = { [Key in keyof Properties as Properties[Key] extends TOptional<Properties[Key]> ? never : Key]: Properties[Key] },
-  RequiredUnion extends string = Extract<keyof RequiredProperties, string>,
-  RequiredTuple extends string[] = UnionToTuple<RequiredUnion>,
-  Result extends string[] | undefined = (
-    IsRequiredArrayLiteralConstant<RequiredTuple> extends true
-     ? RequiredTuple
-     : string[] | undefined
-  )> = Result
-/** Creates a RequiredArray derived from the given TProperties value. */
-function RequiredArray<Properties extends TProperties>(properties: Properties): TRequiredArray<Properties> {
-  return globalThis.Object.keys(properties).filter((key) => !IsOptional(properties[key])) as never
-}
-// ------------------------------------------------------------------
 // TObject
 // ------------------------------------------------------------------
 export type TAdditionalProperties = undefined | TSchema | boolean
@@ -118,31 +81,22 @@ export interface TObject<T extends TProperties = TProperties> extends TSchema, O
   additionalProperties?: TAdditionalProperties
   type: 'object'
   properties: T
-  required: TRequiredArray<T>
+  required?: string[]
 }
 /** `[Json]` Creates an Object type */
-function _Object_<T extends TProperties>(properties: T, options?: ObjectOptions): TObject<T> {
-  const required = RequiredArray(properties) as string[]
-  const schema = required.length > 0 ? { [Kind]: 'Object', type: 'object', required, properties } : { [Kind]: 'Object', type: 'object', properties }
-  return CreateType(schema, options) as never
+function _Object<T extends TProperties>(properties: T, options: ObjectOptions = {}): TObject<T> {
+  const propertyKeys = globalThis.Object.getOwnPropertyNames(properties)
+  const optionalKeys = propertyKeys.filter((key) => IsOptional(properties[key]))
+  const requiredKeys = propertyKeys.filter((name) => !optionalKeys.includes(name))
+  const clonedAdditionalProperties = IsSchema(options.additionalProperties) ? { additionalProperties: CloneType(options.additionalProperties) } : {}
+  const clonedProperties = {} as Record<PropertyKey, TSchema>
+  for (const key of propertyKeys) clonedProperties[key] = CloneType(properties[key])
+  return (
+    requiredKeys.length > 0
+      ? { ...options, ...clonedAdditionalProperties, [Kind]: 'Object', type: 'object', properties: clonedProperties, required: requiredKeys }
+      : { ...options, ...clonedAdditionalProperties, [Kind]: 'Object', type: 'object', properties: clonedProperties }
+  ) as never
 }
 
-// ------------------------------------------------------------------
-// TypeScript 7: CommonJS TS2441
-//
-// TypeScript generates a CommonJS shim that patches local variables
-// via an unqualified reference to Object (e.g. the __esModule shim's
-// Object.defineProperty call). Other compiler tools have been
-// observed patching in the same way, but TypeScript 7 has correctly
-// begun flagging variables named Object in CommonJS, since they
-// conflict with the shim and can cause "used before definition"
-// errors. This is CommonJS-specific; no such shim exists for ESM.
-//
-// TypeBox works around this using a `var` declaration, which is
-// known to avoid use-before-definition errors. TypeBox 1.x employs
-// a similar strategy.
-// ------------------------------------------------------------------
-
 /** `[Json]` Creates an Object type */
-// @ts-ignore - error TS2441: Duplicate identifier 'Object'. Compiler reserves name 'Object' in top level scope of a module.
-export var Object = _Object_
+export const Object = _Object

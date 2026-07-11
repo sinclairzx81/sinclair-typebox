@@ -27,7 +27,7 @@ import { Type, Static } from '@sinclair/typebox'
 
   const keys = ['A', 'B'] as const
 
-  const T = Type.Pick(A, ['A', 'B'])
+  const T = Type.Pick(A, keys)
 
   type T = Static<typeof T>
 

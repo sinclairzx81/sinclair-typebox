@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,14 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { IsObject, IsDate, IsArray, IsTypedArray, IsValueType } from '../guard/index'
+import { IsStandardObject, IsDate, IsArray, IsTypedArray, IsValueType } from '../guard/index'
 import type { ObjectType, ArrayType, TypedArrayType, ValueType } from '../guard/index'
 
 // ------------------------------------------------------------------
 // Equality Checks
 // ------------------------------------------------------------------
 function ObjectType(left: ObjectType, right: unknown): boolean {
-  if (!IsObject(right)) return false
+  if (!IsStandardObject(right)) return false
   const leftKeys = [...Object.keys(left), ...Object.getOwnPropertySymbols(left)]
   const rightKeys = [...Object.keys(right), ...Object.getOwnPropertySymbols(right)]
   if (leftKeys.length !== rightKeys.length) return false
@@ -58,10 +58,10 @@ function ValueType(left: ValueType, right: unknown): any {
 // ------------------------------------------------------------------
 /** Returns true if the left value deep-equals the right */
 export function Equal<T>(left: T, right: unknown): right is T {
+  if (IsStandardObject(left)) return ObjectType(left, right)
   if (IsDate(left)) return DateType(left, right)
   if (IsTypedArray(left)) return TypedArrayType(left, right)
   if (IsArray(left)) return ArrayType(left, right)
-  if (IsObject(left)) return ObjectType(left, right)
   if (IsValueType(left)) return ValueType(left, right)
   throw new Error('ValueEquals: Unable to compare value')
 }

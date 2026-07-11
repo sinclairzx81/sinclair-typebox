@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { IsArray, IsBoolean, IsBigInt, IsDate, IsNull, IsNumber, IsObject, IsString, IsSymbol, IsUint8Array, IsUndefined } from '../guard/index'
+import { IsArray, IsBoolean, IsBigInt, IsDate, IsNull, IsNumber, IsStandardObject, IsString, IsSymbol, IsUint8Array, IsUndefined } from '../guard/index'
 import { TypeBoxError } from '../../type/error/index'
 
 // ------------------------------------------------------------------
@@ -57,7 +57,7 @@ enum ByteMarker {
 // State
 // ------------------------------------------------------------------
 let Accumulator = BigInt('14695981039346656037')
-const [Prime, Size] = [BigInt('1099511628211'), BigInt('18446744073709551616' /* 2 ^ 64 */)]
+const [Prime, Size] = [BigInt('1099511628211'), BigInt('2') ** BigInt('64')]
 const Bytes = Array.from({ length: 256 }).map((_, i) => BigInt(i))
 const F64 = new Float64Array(1)
 const F64In = new DataView(F64.buffer)
@@ -140,7 +140,7 @@ function Visit(value: any) {
   if (IsDate(value)) return DateType(value)
   if (IsNull(value)) return NullType(value)
   if (IsNumber(value)) return NumberType(value)
-  if (IsObject(value)) return ObjectType(value)
+  if (IsStandardObject(value)) return ObjectType(value)
   if (IsString(value)) return StringType(value)
   if (IsSymbol(value)) return SymbolType(value)
   if (IsUint8Array(value)) return Uint8ArrayType(value)

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import type { Static } from '../static/index'
+import { CloneRest } from '../clone/type'
 import { Kind } from '../symbols/index'
 
 // ------------------------------------------------------------------
@@ -46,17 +46,19 @@ export interface TTuple<T extends TSchema[] = TSchema[]> extends TSchema {
   [Kind]: 'Tuple'
   static: TupleStatic<T, this['params']>
   type: 'array'
-  items: T
+  items?: T
   additionalItems?: false
-  minItems: T['length']
-  maxItems: T['length']
+  minItems: number
+  maxItems: number
 }
 /** `[Json]` Creates a Tuple type */
-export function Tuple<Types extends TSchema[]>(types: [...Types], options?: SchemaOptions): TTuple<Types> {
+export function Tuple<T extends TSchema[]>(items: [...T], options: SchemaOptions = {}): TTuple<T> {
+  // return TupleResolver.Resolve(T)
+  const [additionalItems, minItems, maxItems] = [false, items.length, items.length]
   // prettier-ignore
-  return CreateType(
-    types.length > 0 ?
-      { [Kind]: 'Tuple', type: 'array', items: types, additionalItems: false, minItems: types.length, maxItems: types.length } :
-      { [Kind]: 'Tuple', type: 'array', minItems: types.length, maxItems: types.length },
-  options) as never
+  return (
+    items.length > 0 ?
+      { ...options, [Kind]: 'Tuple', type: 'array', items: CloneRest(items), additionalItems, minItems, maxItems } :
+      { ...options, [Kind]: 'Tuple', type: 'array', minItems, maxItems }
+  ) as never
 }

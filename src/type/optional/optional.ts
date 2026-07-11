@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,10 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema } from '../schema/index'
 import type { Ensure } from '../helpers/index'
 import { OptionalKind } from '../symbols/index'
+import { CloneType } from '../clone/type'
 import { Discard } from '../discard/index'
 import type { TMappedResult } from '../mapped/index'
 
@@ -40,14 +40,14 @@ import { IsMappedResult } from '../guard/kind'
 // ------------------------------------------------------------------
 type TRemoveOptional<T extends TSchema> = T extends TOptional<infer S> ? S : T
 function RemoveOptional<T extends TSchema>(schema: T) {
-  return CreateType(Discard(schema, [OptionalKind]))
+  return Discard(CloneType(schema), [OptionalKind])
 }
 // ------------------------------------------------------------------
 // AddOptional
 // ------------------------------------------------------------------
 type TAddOptional<T extends TSchema> = T extends TOptional<infer S> ? TOptional<S> : Ensure<TOptional<T>>
 function AddOptional<T extends TSchema>(schema: T) {
-  return CreateType({ ...schema, [OptionalKind]: 'Optional' })
+  return { ...CloneType(schema), [OptionalKind]: 'Optional' }
 }
 // prettier-ignore
 export type TOptionalWithFlag<T extends TSchema, F extends boolean> = 

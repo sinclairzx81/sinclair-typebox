@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,11 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { IsObject, IsArray, IsTypedArray, IsValueType, type TypedArrayType } from '../guard/index'
+import { IsStandardObject, IsArray, IsTypedArray, IsValueType, type TypedArrayType } from '../guard/index'
 import { ValuePointer } from '../pointer/index'
 import { Clone } from '../clone/index'
 import { TypeBoxError } from '../../type/error/index'
 
-// ------------------------------------------------------------------
-// IsStandardObject
-// ------------------------------------------------------------------
-function IsStandardObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return IsObject(value) && !IsArray(value)
-}
 // ------------------------------------------------------------------
 // Errors
 // ------------------------------------------------------------------

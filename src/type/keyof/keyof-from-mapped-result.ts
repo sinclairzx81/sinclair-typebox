@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,47 +30,55 @@ import type { SchemaOptions } from '../schema/index'
 import type { Ensure, Evaluate } from '../helpers/index'
 import type { TProperties } from '../object/index'
 import { MappedResult, type TMappedResult } from '../mapped/index'
-import { KeyOf, type TKeyOfFromType } from './keyof'
-import { Clone } from '../clone/value'
+import { KeyOf, type TKeyOf } from './keyof'
+
 // ------------------------------------------------------------------
 // FromProperties
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromProperties<Properties extends TProperties> = (
-  { [K2 in keyof Properties]: TKeyOfFromType<Properties[K2]> }   
+type TFromProperties<
+  K extends TProperties
+> = (
+  { [K2 in keyof K]: TKeyOf<K[K2]> }   
 )
 // prettier-ignore
-function FromProperties<Properties extends TProperties>(properties: Properties, options?: SchemaOptions): TFromProperties<Properties> {
-  const result = {} as TProperties
-  for(const K2 of globalThis.Object.getOwnPropertyNames(properties)) result[K2] = KeyOf(properties[K2], Clone(options))
-  return result as never
+function FromProperties<
+  K extends TProperties
+>(K: K, options: SchemaOptions): TFromProperties<K> {
+  const Acc = {} as TProperties
+  for(const K2 of globalThis.Object.getOwnPropertyNames(K)) Acc[K2] = KeyOf(K[K2], options)
+  return Acc as never
 }
 // ------------------------------------------------------------------
 // FromMappedResult
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromMappedResult<MappedResult extends TMappedResult> = (
-  Evaluate<TFromProperties<MappedResult['properties']>>
+type TFromMappedResult<
+  R extends TMappedResult
+> = (
+  Evaluate<TFromProperties<R['properties']>>
 )
 // prettier-ignore
-function FromMappedResult<MappedResult extends TMappedResult>(mappedResult: MappedResult, options?: SchemaOptions): TFromMappedResult<MappedResult> {
-  return FromProperties(mappedResult.properties, options) as never
+function FromMappedResult<
+  R extends TMappedResult
+>(R: R, options: SchemaOptions): TFromMappedResult<R> {
+  return FromProperties(R.properties, options) as never
 }
 // ------------------------------------------------------------------
 // KeyOfFromMappedResult
 // ------------------------------------------------------------------
 // prettier-ignore
 export type TKeyOfFromMappedResult<
-  MappedResult extends TMappedResult,
-  Properties extends TProperties = TFromMappedResult<MappedResult>
+  R extends TMappedResult,
+  P extends TProperties = TFromMappedResult<R>
 > = (
-  Ensure<TMappedResult<Properties>>
+  Ensure<TMappedResult<P>>
 )
 // prettier-ignore
 export function KeyOfFromMappedResult<
-  MappedResult extends TMappedResult,
-  Properties extends TProperties = TFromMappedResult<MappedResult>
->(mappedResult: MappedResult, options?: SchemaOptions): TMappedResult<Properties> {
-  const properties = FromMappedResult(mappedResult, options)
-  return MappedResult(properties) as never
+  R extends TMappedResult,
+  P extends TProperties = TFromMappedResult<R>
+>(R: R, options: SchemaOptions): TMappedResult<P> {
+  const P = FromMappedResult(R, options)
+  return MappedResult(P) as never
 }

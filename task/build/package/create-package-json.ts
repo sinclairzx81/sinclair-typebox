@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -91,19 +91,10 @@ function resolveMetadata() {
     repository: packageJson.repository,
     // flagged by socket.dev if not present
     scripts: { test: 'echo test' },
-    types: "./build/cjs/index.d.ts",
-    main: "./build/cjs/index.js",
-    module: "./build/esm/index.mjs",
     // disable auto bundle strategy: see https://github.com/esm-dev/esm.sh#bundling-strategy
     'esm.sh': { 'bundle': false }, 
-    // specify modules with potential for side effects
-    'sideEffects': [
-      './build/esm/type/registry/format.mjs',
-      './build/esm/type/registry/type.mjs',
-      './build/esm/type/system/policy.mjs',
-      './build/cjs/type/registry/format.js',
-      './build/cjs/type/registry/type.js',
-      './build/cjs/type/system/policy.js'
-    ]
+    types: "./build/cjs/index.d.ts",
+    main: "./build/cjs/index.js",
+    module: "./build/esm/index.mjs"
   }
 }

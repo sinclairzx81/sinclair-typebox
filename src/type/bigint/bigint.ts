@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ THE SOFTWARE.
 
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
-import { CreateType } from '../create/index'
 
 export interface BigIntOptions extends SchemaOptions {
   exclusiveMaximum?: bigint
@@ -43,6 +42,10 @@ export interface TBigInt extends TSchema, BigIntOptions {
   type: 'bigint'
 }
 /** `[JavaScript]` Creates a BigInt type */
-export function BigInt(options?: BigIntOptions): TBigInt {
-  return CreateType({ [Kind]: 'BigInt', type: 'bigint' }, options) as never
+export function BigInt(options: BigIntOptions = {}): TBigInt {
+  return {
+    ...options,
+    [Kind]: 'BigInt',
+    type: 'bigint',
+  } as never
 }

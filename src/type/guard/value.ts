@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,16 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-// --------------------------------------------------------------------------
-// PropertyKey
-// --------------------------------------------------------------------------
-/** Returns true if this value has this property key */
-export function HasPropertyKey<K extends PropertyKey>(value: Record<any, unknown>, key: K): value is Record<PropertyKey, unknown> & { [_ in K]: unknown } {
-  return key in value
-}
-// --------------------------------------------------------------------------
-// Object Instances
-// --------------------------------------------------------------------------
 /** Returns true if this value is an async iterator */
 export function IsAsyncIterator(value: unknown): value is AsyncIterableIterator<unknown> {
   return IsObject(value) && !IsArray(value) && !IsUint8Array(value) && Symbol.asyncIterator in value

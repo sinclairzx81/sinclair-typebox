@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema } from '../schema/index'
 import type { TProperties } from '../object/index'
 import { Kind } from '../symbols/index'
@@ -38,8 +37,8 @@ export interface TMappedResult<T extends TProperties = TProperties> extends TSch
 }
 // prettier-ignore
 export function MappedResult<T extends TProperties>(properties: T): TMappedResult<T> {
-  return CreateType({
+  return {
     [Kind]: 'MappedResult',
     properties
-  }) as never
+  } as never
 }

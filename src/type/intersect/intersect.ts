@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,10 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema } from '../schema/index'
+import { CloneType } from '../clone/type'
 import { Never, type TNever } from '../never/index'
+
 import { TIntersect, IntersectOptions } from './intersect-type'
 import { IntersectCreate } from './intersect-create'
 
@@ -40,15 +41,15 @@ import { IsTransform } from '../guard/kind'
 // Intersect
 // ------------------------------------------------------------------
 // prettier-ignore
-export type Intersect<Types extends TSchema[]> = (
-  Types extends [TSchema] ? Types[0] :
-  Types extends [] ? TNever :
-  TIntersect<Types>
+export type Intersect<T extends TSchema[]> = (
+  T extends [] ? TNever :
+  T extends [TSchema] ? T[0] :
+  TIntersect<T>
 )
 /** `[Json]` Creates an evaluated Intersect type */
-export function Intersect<Types extends TSchema[]>(types: [...Types], options?: IntersectOptions): Intersect<Types> {
-  if (types.length === 1) return CreateType(types[0], options) as never
-  if (types.length === 0) return Never(options) as never
-  if (types.some((schema) => IsTransform(schema))) throw new Error('Cannot intersect transform types')
-  return IntersectCreate(types, options) as never
+export function Intersect<T extends TSchema[]>(T: [...T], options: IntersectOptions = {}): Intersect<T> {
+  if (T.length === 0) return Never(options) as Intersect<T>
+  if (T.length === 1) return CloneType(T[0], options) as Intersect<T>
+  if (T.some((schema) => IsTransform(schema))) throw new Error('Cannot intersect transform types')
+  return IntersectCreate(T, options) as Intersect<T>
 }

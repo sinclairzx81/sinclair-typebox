@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import { Assert } from '../helpers/index'
 import { MappedResult, type TMappedResult, type TMappedKey } from '../mapped/index'
 import { Intrinsic, type TIntrinsic, type IntrinsicMode } from './intrinsic'
 import { Literal, type TLiteral, type TLiteralValue } from '../literal/index'
-import { Clone } from '../clone/value'
 
 // ------------------------------------------------------------------
 // MappedIntrinsicPropertyKey
@@ -50,7 +49,7 @@ function MappedIntrinsicPropertyKey<
   M extends IntrinsicMode,
 >(K: K, M: M, options: SchemaOptions): TMappedIntrinsicPropertyKey<K, M> {
   return {
-    [K]: Intrinsic(Literal(K as TLiteralValue), M, Clone(options))
+    [K]: Intrinsic(Literal(K as TLiteralValue), M, options)
   } as never
 }
 // ------------------------------------------------------------------
@@ -71,11 +70,9 @@ function MappedIntrinsicPropertyKeys<
   K extends PropertyKey[],
   M extends IntrinsicMode
 >(K: [...K], M: M, options: SchemaOptions): TMappedIntrinsicPropertyKeys<K, M> {
-  const result = K.reduce((Acc, L) => {
+  return K.reduce((Acc, L) => {
     return { ...Acc, ...MappedIntrinsicPropertyKey(L, M, options) }
   }, {} as TProperties) as never
-  
-  return result
 }
 // ------------------------------------------------------------------
 // MappedIntrinsicProperties

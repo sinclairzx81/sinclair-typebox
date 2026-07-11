@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { Kind } from '../symbols/index'
 
@@ -36,6 +35,10 @@ export interface TNull extends TSchema {
   type: 'null'
 }
 /** `[Json]` Creates a Null type */
-export function Null(options?: SchemaOptions): TNull {
-  return CreateType({ [Kind]: 'Null', type: 'null' }, options) as never
+export function Null(options: SchemaOptions = {}): TNull {
+  return {
+    ...options,
+    [Kind]: 'Null',
+    type: 'null',
+  } as never
 }

@@ -1,7 +1,49 @@
 # TypeBox Prototypes
 
-TypeBox prototypes are a set of types that are either under consideration for inclusion into the library, or have been requested by users but cannot be added to the library either due to complexity, using schematics that fall outside the supported TypeBox or should be expressed by users via advanced type composition.
+TypeBox prototypes are a set of types that are either under consideration for inclusion into the library, or have been requested by users but cannot be added to the library either due to complexity, using schematics that fall outside the supported TypeBox or should be expressed by users via advanced type composition. 
 
+Each prototype is written as a standalone module that can be copied into projects and used directly, or integrated into extended type builders.
+
+## Const
+
+This type will wrap all interior properties as `readonly` leaving the outer type unwrapped. This type is analogous to the `Readonly<T>` TypeScript utility type, but as TypeBox uses this name as a property modifier, the name `Const` is used.
+
+```typescript
+import { Const } from './prototypes'
+
+const T = Const(Type.Object({                       // const T: TObject<{
+  x: Type.Number()                                  //   x: Type.Readonly(Type.Number())
+}))                                                 // }>
+
+type T = Static<typeof T>                           // type T = {
+                                                    //   readonly x: number
+                                                    // }
+```
+## Evaluate
+
+This type is an advanced mapping type will evaluate for schema redundancy by reducing evaluating intersection rest arguments. This type detects if intersection would produce illogical `never`, removes duplicates and handles intersection type narrowing. This type is a strong candidate for inclusion into the TypeBox library but is pending an equivalent redundancy check for `union` rest arguments. 
+
+```typescript
+import { Evaluate } from './prototypes'
+
+// Evaluate for Duplicates
+//
+const T = Type.Intersect([ Type.Number(), Type.Number(), Type.Number() ])
+
+const E = Evaluate(T)                               // const E: TNumber
+
+// Evaluate for TNever
+//
+const T = Type.Intersect([ Type.Number(), Type.String() ])
+
+const E = Evaluate(T)                               // const E: TIntersect<[TNumber, TString]>
+
+// Evaluate for most narrowed type
+//
+const T = Type.Intersect([ Type.Number(), Type.Literal(1) ])
+
+const E = Evaluate(T)                               // const E: TLiteral<1>
+```
 
 ## PartialDeep
 
@@ -70,50 +112,3 @@ const T = UnionOneOf([                              // const T = {
 type T = Static<typeof T>                           // type T = 'A' | 'B' | 'C'
 
 ```
-
-## Options
-
-By default, TypeBox does not represent arbituary options as generics aware properties. However, there are cases where having options observable to the type system can be useful, for example conditionally mapping schematics based on custom metadata. The Options function makes user defined options generics aware.
-
-```typescript
-import { Options } from './prototypes'
-
-const A = Options(Type.String(), { foo: 1 })             // Options<TString, { foo: number }>
-
-type A = typeof A extends { foo: number } ? true : false // true: foo property is observable to the type system
-```
-
-## Recursive Map
-The Recursive Map type enables deep structural remapping of a type and it's internal constituents. This type accepts a TSchema type and a mapping type function (expressed via HKT). The HKT is applied when traversing the type and it's interior. The mapping HKT can apply conditional tests to each visited type to remap into a new form. The following augments a schematic via Options, and conditionally remaps any schema with an default annotation to make it optional. 
-```typescript
-import { Type, TOptional, Static, TSchema } from '@sinclair/typebox'
-
-import { TRecursiveMap, TMappingType, Options } from './prototypes'
-
-// ------------------------------------------------------------------
-// StaticDefault
-// ------------------------------------------------------------------
-export interface StaticDefaultMapping extends TMappingType { 
-  output: (
-    this['input'] extends TSchema                        // if input schematic contains an default 
-      ? this['input'] extends { default: unknown }       // annotation, remap it to be optional, 
-        ? TOptional<this['input']>                       // otherwise just return the schema as is.
-        : this['input']
-      : this['input']
-  )
-}
-export type StaticDefault<Type extends TSchema> = (
-  Static<TRecursiveMap<Type, StaticDefaultMapping>>
-)
-
-// ------------------------------------------------------------------
-// Usage
-// ------------------------------------------------------------------
-
-const T = Type.Object({
-  x: Options(Type.String(), { default: 'hello' }),
-  y: Type.String()
-})
-
-type T = StaticDefault<typeof T>   // { x?: string, y: string }
-type S = Static<typeof T>          // { x: string, y: string }

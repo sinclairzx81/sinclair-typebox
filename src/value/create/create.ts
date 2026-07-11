@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,10 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { HasPropertyKey } from '../guard/index'
+import { HasPropertyKey, IsString } from '../guard/index'
 import { Check } from '../check/index'
 import { Clone } from '../clone/index'
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 import { TemplateLiteralGenerate, IsTemplateLiteralFinite } from '../../type/template-literal/index'
 import { PatternStringExact, PatternNumberExact } from '../../type/patterns/index'
 import { TypeRegistry } from '../../type/registry/index'
@@ -45,7 +45,6 @@ import type { TBoolean } from '../../type/boolean/index'
 import type { TDate } from '../../type/date/index'
 import type { TConstructor } from '../../type/constructor/index'
 import type { TFunction } from '../../type/function/index'
-import type { TImport } from '../../type/module/index'
 import type { TInteger } from '../../type/integer/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TIterator } from '../../type/iterator/index'
@@ -71,8 +70,6 @@ import type { TUndefined } from '../../type/undefined/index'
 import type { TUint8Array } from '../../type/uint8array/index'
 import type { TVoid } from '../../type/void/index'
 
-import { IsFunction } from '../guard/guard'
-
 // ------------------------------------------------------------------
 // Errors
 // ------------------------------------------------------------------
@@ -85,7 +82,7 @@ export class ValueCreateError extends TypeBoxError {
 // Default
 // ------------------------------------------------------------------
 function FromDefault(value: unknown) {
-  return IsFunction(value) ? value() : Clone(value)
+  return typeof value === 'function' ? value : Clone(value)
 }
 // ------------------------------------------------------------------
 // Create
@@ -96,9 +93,6 @@ function FromAny(schema: TAny, references: TSchema[]): any {
   } else {
     return {}
   }
-}
-function FromArgument(schema: TAny, references: TSchema[]): any {
-  return {}
 }
 function FromArray(schema: TArray, references: TSchema[]): any {
   if (schema.uniqueItems === true && !HasPropertyKey(schema, 'default')) {
@@ -170,11 +164,6 @@ function FromFunction(schema: TFunction, references: TSchema[]): any {
   } else {
     return () => Visit(schema.returns, references)
   }
-}
-function FromImport(schema: TImport, references: TSchema[]): any {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions])
 }
 function FromInteger(schema: TInteger, references: TSchema[]): any {
   if (HasPropertyKey(schema, 'default')) {
@@ -269,8 +258,14 @@ function FromPromise(schema: TPromise, references: TSchema[]): any {
   }
 }
 function FromRecord(schema: TRecord, references: TSchema[]): any {
+  const [keyPattern, valueSchema] = Object.entries(schema.patternProperties)[0]
   if (HasPropertyKey(schema, 'default')) {
     return FromDefault(schema.default)
+  } else if (!(keyPattern === PatternStringExact || keyPattern === PatternNumberExact)) {
+    const propertyKeys = keyPattern.slice(1, keyPattern.length - 1).split('|')
+    const Acc = {} as Record<PropertyKey, unknown>
+    for (const key of propertyKeys) Acc[key] = Visit(valueSchema, references)
+    return Acc
   } else {
     return {}
   }
@@ -395,13 +390,11 @@ function FromKind(schema: TSchema, references: TSchema[]): any {
   }
 }
 function Visit(schema: TSchema, references: TSchema[]): unknown {
-  const references_ = Pushref(schema, references)
+  const references_ = IsString(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema_[Kind]) {
     case 'Any':
       return FromAny(schema_, references_)
-    case 'Argument':
-      return FromArgument(schema_, references_)
     case 'Array':
       return FromArray(schema_, references_)
     case 'AsyncIterator':
@@ -416,8 +409,6 @@ function Visit(schema: TSchema, references: TSchema[]): unknown {
       return FromDate(schema_, references_)
     case 'Function':
       return FromFunction(schema_, references_)
-    case 'Import':
-      return FromImport(schema_, references_)
     case 'Integer':
       return FromInteger(schema_, references_)
     case 'Intersect':

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import { TemplateLiteral, TemplateLiteralParseExact, IsTemplateLiteralExpressionFinite, TemplateLiteralExpressionGenerate, type TTemplateLiteral, type TTemplateLiteralKind } from '../template-literal/index'
 import { IntrinsicFromMappedKey, type TIntrinsicFromMappedKey } from './intrinsic-from-mapped-key'
@@ -130,22 +129,20 @@ export type TIntrinsic<T extends TSchema, M extends IntrinsicMode> =
   T extends TUnion<infer S> ? TUnion<TFromRest<S, M>> :
   T extends TLiteral<infer S> ? TLiteral<TFromLiteralValue<S, M>> :
   T
-
 /** Applies an intrinsic string manipulation to the given type. */
 export function Intrinsic<T extends TMappedKey, M extends IntrinsicMode>(schema: T, mode: M, options?: SchemaOptions): TIntrinsicFromMappedKey<T, M>
 /** Applies an intrinsic string manipulation to the given type. */
 export function Intrinsic<T extends TSchema, M extends IntrinsicMode>(schema: T, mode: M, options?: SchemaOptions): TIntrinsic<T, M>
 /** Applies an intrinsic string manipulation to the given type. */
-export function Intrinsic(schema: TSchema, mode: IntrinsicMode, options: SchemaOptions = {}): never {
+export function Intrinsic(schema: TSchema, mode: IntrinsicMode, options: SchemaOptions = {}): any {
   // prettier-ignore
   return (
     // Intrinsic-Mapped-Inference
     IsMappedKey(schema) ? IntrinsicFromMappedKey(schema, mode, options) :
     // Standard-Inference
-    IsTemplateLiteral(schema) ? FromTemplateLiteral(schema, mode, options) :
+    IsTemplateLiteral(schema) ? FromTemplateLiteral(schema, mode, schema) :
     IsUnion(schema) ? Union(FromRest(schema.anyOf, mode), options) :
     IsLiteral(schema) ? Literal(FromLiteralValue(schema.const, mode), options) :
-    // Default Type
-    CreateType(schema, options)
-  ) as never
+    schema
+  )
 }

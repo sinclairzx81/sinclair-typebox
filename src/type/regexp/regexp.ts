@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { SchemaOptions } from '../schema/index'
 import type { TSchema } from '../schema/index'
 import { IsString } from '../guard/value'
@@ -51,7 +50,7 @@ export function RegExp(pattern: string, options?: RegExpOptions): TRegExp
 /** `[JavaScript]` Creates a RegExp type */
 export function RegExp(regex: RegExp, options?: RegExpOptions): TRegExp
 /** `[JavaScript]` Creates a RegExp type */
-export function RegExp(unresolved: RegExp | string, options?: RegExpOptions) {
+export function RegExp(unresolved: RegExp | string, options: RegExpOptions = {}) {
   const expr = IsString(unresolved) ? new globalThis.RegExp(unresolved) : unresolved
-  return CreateType({ [Kind]: 'RegExp', type: 'RegExp', source: expr.source, flags: expr.flags }, options) as never
+  return { ...options, [Kind]: 'RegExp', type: 'RegExp', source: expr.source, flags: expr.flags } as never
 }

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@ function DiscardKey(value: Record<PropertyKey, any>, key: PropertyKey) {
   const { [key]: _, ...rest } = value
   return rest
 }
-/** Discards property keys from the given value. This function returns a shallow Clone. */
 export function Discard(value: Record<PropertyKey, any>, keys: PropertyKey[]) {
   return keys.reduce((acc, key) => DiscardKey(acc, key), value)
 }

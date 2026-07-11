@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { CreateType } from '../create/type'
 import type { TSchema, SchemaOptions } from '../schema/index'
 import type { Assert } from '../helpers/index'
 import type { TUnion } from '../union/index'
@@ -95,9 +94,9 @@ export function TemplateLiteral<T extends string>(syntax: T, options?: SchemaOpt
 export function TemplateLiteral<T extends TTemplateLiteralKind[]>(kinds: [...T], options?: SchemaOptions): TTemplateLiteral<T>
 /** `[Json]` Creates a TemplateLiteral type */
 // prettier-ignore
-export function TemplateLiteral(unresolved: TTemplateLiteralKind[] | string, options?: SchemaOptions): any {
+export function TemplateLiteral(unresolved: TTemplateLiteralKind[] | string, options: SchemaOptions = {}): any {
   const pattern = IsString(unresolved) 
     ? TemplateLiteralPattern(TemplateLiteralSyntax(unresolved)) 
     : TemplateLiteralPattern(unresolved as TTemplateLiteralKind[])
-  return CreateType({ [Kind]: 'TemplateLiteral', type: 'string', pattern }, options)
+  return { ...options, [Kind]: 'TemplateLiteral', type: 'string', pattern }
 }

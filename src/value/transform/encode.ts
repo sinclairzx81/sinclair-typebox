@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,16 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { TypeSystemPolicy } from '../../system/policy'
 import { Kind, TransformKind } from '../../type/symbols/index'
 import { TypeBoxError } from '../../type/error/index'
 import { ValueError } from '../../errors/index'
 import { KeyOfPropertyKeys, KeyOfPropertyEntries } from '../../type/keyof/index'
-import { Deref, Pushref } from '../deref/index'
+import { Index } from '../../type/indexed/index'
+import { Deref } from '../deref/index'
 import { Check } from '../check/index'
 
 import type { TSchema } from '../../type/schema/index'
 import type { TArray } from '../../type/array/index'
-import type { TImport } from '../../type/module/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TNot } from '../../type/not/index'
 import type { TObject } from '../../type/object/index'
@@ -49,11 +48,11 @@ import type { TUnion } from '../../type/union/index'
 // ------------------------------------------------------------------
 // ValueGuard
 // ------------------------------------------------------------------
-import { HasPropertyKey, IsObject, IsArray, IsValueType, IsUndefined as IsUndefinedValue } from '../guard/index'
+import { IsStandardObject, IsArray, IsValueType } from '../guard/index'
 // ------------------------------------------------------------------
-// KindGuard
+// TypeGuard
 // ------------------------------------------------------------------
-import { IsTransform, IsSchema, IsUndefined } from '../../type/guard/kind'
+import { IsTransform, IsSchema } from '../../type/guard/type'
 // ------------------------------------------------------------------
 // Errors
 // ------------------------------------------------------------------
@@ -97,16 +96,9 @@ function FromArray(schema: TArray, references: TSchema[], path: string, value: a
     : defaulted
 }
 // prettier-ignore
-function FromImport(schema: TImport, references: TSchema[], path: string, value: unknown): unknown {
-  const additional = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  const result = Default(schema, path, value)
-  return Visit(target, [...references, ...additional], path, result)
-}
-// prettier-ignore
 function FromIntersect(schema: TIntersect, references: TSchema[], path: string, value: any) {
   const defaulted = Default(schema, path, value)
-  if (!IsObject(value) || IsValueType(value)) return defaulted
+  if (!IsStandardObject(value) || IsValueType(value)) return defaulted
   const knownEntries = KeyOfPropertyEntries(schema)
   const knownKeys = knownEntries.map(entry => entry[0])
   const knownProperties = { ...defaulted } as Record<PropertyKey, unknown>
@@ -114,7 +106,7 @@ function FromIntersect(schema: TIntersect, references: TSchema[], path: string, 
     knownProperties[knownKey] = Visit(knownSchema, references, `${path}/${knownKey}`, knownProperties[knownKey])
   }
   if (!IsTransform(schema.unevaluatedProperties)) {
-    return knownProperties
+    return Default(schema, path, knownProperties)
   }
   const unknownKeys = Object.getOwnPropertyNames(knownProperties)
   const unevaluatedProperties = schema.unevaluatedProperties as TSchema
@@ -131,19 +123,10 @@ function FromNot(schema: TNot, references: TSchema[], path: string, value: any) 
 // prettier-ignore
 function FromObject(schema: TObject, references: TSchema[], path: string, value: any) {
   const defaulted = Default(schema, path, value)
-  if (!IsObject(defaulted)) return defaulted
+  if (!IsStandardObject(defaulted)) return defaulted
   const knownKeys = KeyOfPropertyKeys(schema) as string[]
   const knownProperties = { ...defaulted } as Record<PropertyKey, unknown>
-  for(const key of knownKeys) {
-    if(!HasPropertyKey(knownProperties, key)) continue
-    // if the property value is undefined, but the target is not, nor does it satisfy exact optional 
-    // property policy, then we need to continue. This is a special case for optional property handling 
-    // where a transforms wrapped in a optional modifiers should not run.
-    if(IsUndefinedValue(knownProperties[key]) && (
-      !IsUndefined(schema.properties[key]) ||
-      TypeSystemPolicy.IsExactOptionalProperty(knownProperties, key)
-    )) continue
-    // encode property
+  for(const key of knownKeys) if(key in knownProperties) {
     knownProperties[key] = Visit(schema.properties[key], references, `${path}/${key}`, knownProperties[key])
   }
   if (!IsSchema(schema.additionalProperties)) {
@@ -160,7 +143,7 @@ function FromObject(schema: TObject, references: TSchema[], path: string, value:
 // prettier-ignore
 function FromRecord(schema: TRecord, references: TSchema[], path: string, value: any) {
   const defaulted = Default(schema, path, value) as Record<PropertyKey, unknown>
-  if (!IsObject(value)) return defaulted
+  if (!IsStandardObject(value)) return defaulted
   const pattern = Object.getOwnPropertyNames(schema.patternProperties)[0]
   const knownKeys = new RegExp(pattern)
   const knownProperties = {...defaulted } as Record<PropertyKey, unknown>
@@ -168,7 +151,7 @@ function FromRecord(schema: TRecord, references: TSchema[], path: string, value:
     knownProperties[key] = Visit(schema.patternProperties[pattern], references, `${path}/${key}`, knownProperties[key])
   }
   if (!IsSchema(schema.additionalProperties)) {
-    return knownProperties
+    return Default(schema, path, knownProperties)
   }
   const unknownKeys = Object.getOwnPropertyNames(knownProperties)
   const additionalProperties = schema.additionalProperties as TSchema
@@ -213,13 +196,11 @@ function FromUnion(schema: TUnion, references: TSchema[], path: string, value: a
 }
 // prettier-ignore
 function Visit(schema: TSchema, references: TSchema[], path: string, value: any): any {
-  const references_ = Pushref(schema, references)
+  const references_ = typeof schema.$id === 'string' ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema[Kind]) {
     case 'Array':
       return FromArray(schema_, references_, path, value)
-    case 'Import':
-      return FromImport(schema_, references_, path, value)
     case 'Intersect':
       return FromIntersect(schema_, references_, path, value)
     case 'Not':
