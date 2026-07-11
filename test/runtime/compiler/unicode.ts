@@ -31,7 +31,7 @@ describe('compiler/Unicode', () => {
       },
     )
     const T = Type.Object({
-      vector: Type.Ref(R.$id!),
+      vector: Type.Ref(R),
     })
     Ok(
       T,

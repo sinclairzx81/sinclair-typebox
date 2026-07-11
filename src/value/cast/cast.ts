@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,13 +32,12 @@ import { Kind } from '../../type/symbols/index'
 import { Create } from '../create/index'
 import { Check } from '../check/index'
 import { Clone } from '../clone/index'
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 
 import type { TSchema } from '../../type/schema/index'
 import type { Static } from '../../type/static/index'
 import type { TArray } from '../../type/array/index'
 import type { TConstructor } from '../../type/constructor/index'
-import type { TImport } from '../../type/module/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TObject } from '../../type/object/index'
 import type { TRecord } from '../../type/record/index'
@@ -57,29 +56,25 @@ export class ValueCastError extends TypeBoxError {
   }
 }
 // ------------------------------------------------------------------
-// The following logic assigns a score to a schema based on how well
-// it matches a given value. For object types, the score is calculated
-// by evaluating each property of the value against the schema's
-// properties. To avoid bias towards objects with many properties,
-// each property contributes equally to the total score. Properties
-// that exactly match literal values receive the highest possible
-// score, as literals are often used as discriminators in union types.
+// The following will score a schema against a value. For objects,
+// the score is the tally of points awarded for each property of
+// the value. Property points are (1.0 / propertyCount) to prevent
+// large property counts biasing results. Properties that match
+// literal values are maximally awarded as literals are typically
+// used as union discriminator fields.
 // ------------------------------------------------------------------
 function ScoreUnion(schema: TSchema, references: TSchema[], value: any): number {
   if (schema[Kind] === 'Object' && typeof value === 'object' && !IsNull(value)) {
     const object = schema as TObject
     const keys = Object.getOwnPropertyNames(value)
     const entries = Object.entries(object.properties)
+    const [point, max] = [1 / entries.length, entries.length]
     return entries.reduce((acc, [key, schema]) => {
-      const literal = schema[Kind] === 'Literal' && schema.const === value[key] ? 100 : 0
-      const checks = Check(schema, references, value[key]) ? 10 : 0
-      const exists = keys.includes(key) ? 1 : 0
+      const literal = schema[Kind] === 'Literal' && schema.const === value[key] ? max : 0
+      const checks = Check(schema, references, value[key]) ? point : 0
+      const exists = keys.includes(key) ? point : 0
       return acc + (literal + checks + exists)
     }, 0)
-  } else if (schema[Kind] === 'Union') {
-    const schemas = schema.anyOf.map((schema: TSchema) => Deref(schema, references))
-    const scores = schemas.map((schema: TSchema) => ScoreUnion(schema, references, value))
-    return Math.max(...scores)
   } else {
     return Check(schema, references, value) ? 1 : 0
   }
@@ -138,29 +133,10 @@ function FromConstructor(schema: TConstructor, references: TSchema[], value: any
   }
   return result
 }
-function FromImport(schema: TImport, references: TSchema[], value: unknown): boolean {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions], value)
-}
-
-// ------------------------------------------------------------------
-// Intersect
-// ------------------------------------------------------------------
-function IntersectAssign(correct: unknown, value: unknown): unknown {
-  // trust correct on mismatch | value on non-object
-  if ((IsObject(correct) && !IsObject(value)) || (!IsObject(correct) && IsObject(value))) return correct
-  if (!IsObject(correct) || !IsObject(value)) return value
-  return globalThis.Object.getOwnPropertyNames(correct).reduce((result, key) => {
-    const property = key in value ? IntersectAssign(correct[key], value[key]) : correct[key]
-    return { ...result, [key]: property }
-  }, {})
-}
 function FromIntersect(schema: TIntersect, references: TSchema[], value: any): any {
-  if (Check(schema, references, value)) return value
-  const correct = Create(schema, references)
-  const assigned = IntersectAssign(correct, value)
-  return Check(schema, references, assigned) ? assigned : correct
+  const created = Create(schema, references)
+  const mapped = IsObject(created) && IsObject(value) ? { ...(created as any), ...value } : value
+  return Check(schema, references, mapped) ? mapped : Create(schema, references)
 }
 function FromNever(schema: TNever, references: TSchema[], value: any): any {
   throw new ValueCastError(schema, 'Never types cannot be cast')
@@ -211,7 +187,7 @@ function FromUnion(schema: TUnion, references: TSchema[], value: any): any {
   return Check(schema, references, value) ? Clone(value) : CastUnion(schema, references, value)
 }
 function Visit(schema: TSchema, references: TSchema[], value: any): any {
-  const references_ = IsString(schema.$id) ? Pushref(schema, references) : references
+  const references_ = IsString(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema[Kind]) {
     // --------------------------------------------------------------
@@ -221,8 +197,6 @@ function Visit(schema: TSchema, references: TSchema[], value: any): any {
       return FromArray(schema_, references_, value)
     case 'Constructor':
       return FromConstructor(schema_, references_, value)
-    case 'Import':
-      return FromImport(schema_, references_, value)
     case 'Intersect':
       return FromIntersect(schema_, references_, value)
     case 'Never':

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -36,52 +36,77 @@ import { Clone } from '../clone/value'
 // FromPropertyKey
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromPropertyKey<Type extends TSchema, Key extends PropertyKey> = {
-  [_ in Key]: TOmit<Type, [Key]>
-}
+type TFromPropertyKey<
+  T extends TSchema,
+  K extends PropertyKey,
+> = {
+    [_ in K]: TOmit<T, [K]>
+  }
 // prettier-ignore
-function FromPropertyKey<Type extends TSchema, Key extends PropertyKey>(type: Type, key: Key, options?: SchemaOptions): TFromPropertyKey<Type, Key> {
-  return { [key]: Omit(type, [key], Clone(options)) } as never
+function FromPropertyKey<
+  T extends TSchema,
+  K extends PropertyKey,
+>(T: T, K: K, options?: SchemaOptions): TFromPropertyKey<T, K> {
+  return {
+    [K]: Omit(T, [K], Clone(options))
+  } as never
 }
 // ------------------------------------------------------------------
 // FromPropertyKeys
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromPropertyKeys<Type extends TSchema, PropertyKeys extends PropertyKey[], Result extends TProperties = {}> = (
-  PropertyKeys extends [infer LK extends PropertyKey, ...infer RK extends PropertyKey[]]
-    ? TFromPropertyKeys<Type, RK, Result & TFromPropertyKey<Type, LK>>
-    : Result
+type TFromPropertyKeys<
+  T extends TSchema,
+  K extends PropertyKey[],
+  Acc extends TProperties = {}
+> = (
+  K extends [infer LK extends PropertyKey, ...infer RK extends PropertyKey[]]
+    ? TFromPropertyKeys<T, RK, Acc & TFromPropertyKey<T, LK>>
+    : Acc
 )
 // prettier-ignore
-function FromPropertyKeys<Type extends TSchema, PropertyKeys extends PropertyKey[]>(type: Type, propertyKeys: [...PropertyKeys], options?: SchemaOptions): TFromPropertyKeys<Type, PropertyKeys> {
-  return propertyKeys.reduce((Acc, LK) => {
-    return { ...Acc, ...FromPropertyKey(type, LK, options) }
+function FromPropertyKeys<
+  T extends TSchema,
+  K extends PropertyKey[]
+>(T: T, K: [...K], options?: SchemaOptions): TFromPropertyKeys<T, K> {
+  return K.reduce((Acc, LK) => {
+    return { ...Acc, ...FromPropertyKey(T, LK, options) }
   }, {} as TProperties) as never
 }
 // ------------------------------------------------------------------
 // FromMappedKey
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromMappedKey<Type extends TSchema, MappedKey extends TMappedKey> = (
-  TFromPropertyKeys<Type, MappedKey['keys']>
+type TFromMappedKey<
+  T extends TSchema,
+  K extends TMappedKey,
+> = (
+  TFromPropertyKeys<T, K['keys']>
 )
 // prettier-ignore
-function FromMappedKey<Type extends TSchema, MappedKey extends TMappedKey>(type: Type, mappedKey: MappedKey, options?: SchemaOptions): TFromMappedKey<Type, MappedKey> {
-  return FromPropertyKeys(type, mappedKey.keys, options) as never
+function FromMappedKey<
+  T extends TSchema,
+  K extends TMappedKey,
+>(T: T, K: K, options?: SchemaOptions): TFromMappedKey<T, K> {
+  return FromPropertyKeys(T, K.keys, options) as never
 }
 // ------------------------------------------------------------------
 // OmitFromMappedKey
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TOmitFromMappedKey<Type extends TSchema, MappedKey extends TMappedKey,
-  Properties extends TProperties = TFromMappedKey<Type, MappedKey>
+export type TOmitFromMappedKey<
+  T extends TSchema,
+  K extends TMappedKey,
+  P extends TProperties = TFromMappedKey<T, K>
 > = (
-  TMappedResult<Properties>
+  TMappedResult<P>
 )
 // prettier-ignore
-export function OmitFromMappedKey<Type extends TSchema, MappedKey extends TMappedKey,
-  Properties extends TProperties = TFromMappedKey<Type, MappedKey>
->(type: Type, mappedKey: MappedKey, options?: SchemaOptions): TMappedResult<Properties> {
-  const properties = FromMappedKey(type, mappedKey, options)
-  return MappedResult(properties) as never
+export function OmitFromMappedKey<
+  T extends TSchema,
+  K extends TMappedKey,
+  P extends TProperties = TFromMappedKey<T, K>
+>(T: T, K: K, options?: SchemaOptions): TMappedResult<P> {
+  const P = FromMappedKey(T, K, options)
+  return MappedResult(P) as never
 }

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,21 +29,21 @@ THE SOFTWARE.
 import * as ValueGuard from './value'
 import { Kind, Hint, TransformKind, ReadonlyKind, OptionalKind } from '../symbols/index'
 import { TransformOptions } from '../transform/index'
-
+import { TTemplateLiteral } from '../template-literal/index'
+import { TArray } from '../array/index'
+import { TBoolean } from '../boolean/index'
+import type { TRecord } from '../record/index'
+import type { TString } from '../string/index'
+import type { TUnion } from '../union/index'
 import type { TAny } from '../any/index'
-import type { TArgument } from '../argument/index'
-import type { TArray } from '../array/index'
 import type { TAsyncIterator } from '../async-iterator/index'
-import type { TBoolean } from '../boolean/index'
-import type { TComputed } from '../computed/index'
 import type { TBigInt } from '../bigint/index'
 import type { TConstructor } from '../constructor/index'
 import type { TFunction } from '../function/index'
-import type { TImport } from '../module/index'
 import type { TInteger } from '../integer/index'
 import type { TIntersect } from '../intersect/index'
 import type { TIterator } from '../iterator/index'
-import type { TLiteral, TLiteralValue } from '../literal/index'
+import type { TLiteral } from '../literal/index'
 import type { TMappedKey, TMappedResult } from '../mapped/index'
 import type { TNever } from '../never/index'
 import type { TNot } from '../not/index'
@@ -53,18 +53,14 @@ import type { TObject, TProperties } from '../object/index'
 import type { TOptional } from '../optional/index'
 import type { TPromise } from '../promise/index'
 import type { TReadonly } from '../readonly/index'
-import type { TRecord } from '../record/index'
 import type { TRef } from '../ref/index'
 import type { TRegExp } from '../regexp/index'
 import type { TSchema } from '../schema/index'
-import type { TString } from '../string/index'
 import type { TSymbol } from '../symbol/index'
-import type { TTemplateLiteral } from '../template-literal/index'
 import type { TTuple } from '../tuple/index'
 import type { TUint8Array } from '../uint8array/index'
 import type { TUndefined } from '../undefined/index'
 import type { TUnknown } from '../unknown/index'
-import type { TUnion } from '../union/index'
 import type { TUnsafe } from '../unsafe/index'
 import type { TVoid } from '../void/index'
 import type { TDate } from '../date/index'
@@ -82,10 +78,6 @@ export function IsOptional<T extends TSchema>(value: T): value is TOptional<T> {
 export function IsAny(value: unknown): value is TAny {
   return IsKindOf(value, 'Any')
 }
-/** `[Kind-Only]` Returns true if the given value is TArgument */
-export function IsArgument(value: unknown): value is TArgument {
-  return IsKindOf(value, 'Argument')
-}
 /** `[Kind-Only]` Returns true if the given value is TArray */
 export function IsArray(value: unknown): value is TArray {
   return IsKindOf(value, 'Array')
@@ -102,10 +94,6 @@ export function IsBigInt(value: unknown): value is TBigInt {
 export function IsBoolean(value: unknown): value is TBoolean {
   return IsKindOf(value, 'Boolean')
 }
-/** `[Kind-Only]` Returns true if the given value is TComputed */
-export function IsComputed(value: unknown): value is TComputed {
-  return IsKindOf(value, 'Computed')
-}
 /** `[Kind-Only]` Returns true if the given value is TConstructor */
 export function IsConstructor(value: unknown): value is TConstructor {
   return IsKindOf(value, 'Constructor')
@@ -117,10 +105,6 @@ export function IsDate(value: unknown): value is TDate {
 /** `[Kind-Only]` Returns true if the given value is TFunction */
 export function IsFunction(value: unknown): value is TFunction {
   return IsKindOf(value, 'Function')
-}
-/** `[Kind-Only]` Returns true if the given value is TInteger */
-export function IsImport(value: unknown): value is TImport {
-  return IsKindOf(value, 'Import')
 }
 /** `[Kind-Only]` Returns true if the given value is TInteger */
 export function IsInteger(value: unknown): value is TInteger {
@@ -153,10 +137,6 @@ export function IsLiteralNumber(value: unknown): value is TLiteral<number> {
 /** `[Kind-Only]` Returns true if the given value is TLiteral<boolean> */
 export function IsLiteralBoolean(value: unknown): value is TLiteral<boolean> {
   return IsLiteral(value) && ValueGuard.IsBoolean(value.const)
-}
-/** `[Kind-Only]` Returns true if the given value is TLiteralValue */
-export function IsLiteralValue(value: unknown): value is TLiteralValue {
-  return ValueGuard.IsBoolean(value) || ValueGuard.IsNumber(value) || ValueGuard.IsString(value)
 }
 /** `[Kind-Only]` Returns true if the given value is TLiteral */
 export function IsLiteral(value: unknown): value is TLiteral {
@@ -267,12 +247,10 @@ export function IsSchema(value: unknown): value is TSchema {
   // prettier-ignore
   return (
     IsAny(value) ||
-    IsArgument(value) ||
     IsArray(value) ||
     IsBoolean(value) ||
     IsBigInt(value) ||
     IsAsyncIterator(value) ||
-    IsComputed(value) ||
     IsConstructor(value) ||
     IsDate(value) ||
     IsFunction(value) ||

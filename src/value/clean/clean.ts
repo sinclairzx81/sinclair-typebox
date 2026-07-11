@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,11 @@ THE SOFTWARE.
 import { KeyOfPropertyKeys } from '../../type/keyof/index'
 import { Check } from '../check/index'
 import { Clone } from '../clone/index'
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 import { Kind } from '../../type/symbols/index'
 
 import type { TSchema } from '../../type/schema/index'
 import type { TArray } from '../../type/array/index'
-import type { TImport } from '../../type/module/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TObject } from '../../type/object/index'
 import type { TRecord } from '../../type/record/index'
@@ -61,7 +60,6 @@ import {
 import { 
   IsKind
 } from '../../type/guard/kind'
-
 // ------------------------------------------------------------------
 // IsCheckable
 // ------------------------------------------------------------------
@@ -74,11 +72,6 @@ function IsCheckable(schema: unknown): boolean {
 function FromArray(schema: TArray, references: TSchema[], value: unknown): any {
   if (!IsArray(value)) return value
   return value.map((value) => Visit(schema.items, references, value))
-}
-function FromImport(schema: TImport, references: TSchema[], value: unknown): any {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions], value)
 }
 function FromIntersect(schema: TIntersect, references: TSchema[], value: unknown): any {
   const unevaluatedProperties = schema.unevaluatedProperties as TSchema
@@ -156,13 +149,11 @@ function FromUnion(schema: TUnion, references: TSchema[], value: unknown): any {
   return value
 }
 function Visit(schema: TSchema, references: TSchema[], value: unknown): unknown {
-  const references_ = IsString(schema.$id) ? Pushref(schema, references) : references
+  const references_ = IsString(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema_[Kind]) {
     case 'Array':
       return FromArray(schema_, references_, value)
-    case 'Import':
-      return FromImport(schema_, references_, value)
     case 'Intersect':
       return FromIntersect(schema_, references_, value)
     case 'Object':

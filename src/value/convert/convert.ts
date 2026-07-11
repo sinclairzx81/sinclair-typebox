@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,6 @@ import type { TBoolean } from '../../type/boolean/index'
 import type { TDate } from '../../type/date/index'
 import type { TInteger } from '../../type/integer/index'
 import type { TIntersect } from '../../type/intersect/index'
-import type { TImport } from '../../type/module/index'
 import type { TLiteral } from '../../type/literal/index'
 import type { TNull } from '../../type/null/index'
 import type { TNumber } from '../../type/number/index'
@@ -56,6 +55,11 @@ import type { TUndefined } from '../../type/undefined/index'
 // ValueGuard
 // ------------------------------------------------------------------
 import { IsArray, IsObject, IsDate, IsUndefined, IsString, IsNumber, IsBoolean, IsBigInt, IsSymbol, HasPropertyKey } from '../guard/index'
+
+// ------------------------------------------------------------------
+// TypeGuard
+// ------------------------------------------------------------------
+import { IsOptional } from '../../type/guard/kind'
 
 // ------------------------------------------------------------------
 // Conversions
@@ -119,13 +123,13 @@ function TryConvertBigInt(value: unknown) {
   return IsStringNumeric(value) ? BigInt(truncateInteger(value)) : IsNumber(value) ? BigInt(Math.trunc(value)) : IsValueFalse(value) ? BigInt(0) : IsValueTrue(value) ? BigInt(1) : value
 }
 function TryConvertString(value: unknown) {
-  return IsSymbol(value) && value.description !== undefined ? value.description.toString() : IsValueToString(value) ? value.toString() : value
+  return IsValueToString(value) ? value.toString() : IsSymbol(value) && value.description !== undefined ? value.description.toString() : value
 }
 function TryConvertNumber(value: unknown) {
   return IsStringNumeric(value) ? parseFloat(value) : IsValueTrue(value) ? 1 : IsValueFalse(value) ? 0 : value
 }
 function TryConvertInteger(value: unknown) {
-  return IsStringNumeric(value) ? parseInt(value) : IsNumber(value) ? Math.trunc(value) : IsValueTrue(value) ? 1 : IsValueFalse(value) ? 0 : value
+  return IsStringNumeric(value) ? parseInt(value) : IsNumber(value) ? value | 0 : IsValueTrue(value) ? 1 : IsValueFalse(value) ? 0 : value
 }
 function TryConvertNull(value: unknown) {
   return IsString(value) && value.toLowerCase() === 'null' ? null : value
@@ -178,11 +182,6 @@ function FromBoolean(schema: TBoolean, references: TSchema[], value: any): unkno
 function FromDate(schema: TDate, references: TSchema[], value: any): unknown {
   return TryConvertDate(value)
 }
-function FromImport(schema: TImport, references: TSchema[], value: unknown): unknown {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions], value)
-}
 function FromInteger(schema: TInteger, references: TSchema[], value: any): unknown {
   return TryConvertInteger(value)
 }
@@ -200,7 +199,7 @@ function FromNumber(schema: TNumber, references: TSchema[], value: any): unknown
 }
 // prettier-ignore
 function FromObject(schema: TObject, references: TSchema[], value: any): unknown {
-  if(!IsObject(value) || IsArray(value)) return value
+  if(!IsObject(value)) return value
   for(const propertyKey of Object.getOwnPropertyNames(schema.properties)) {
     if(!HasPropertyKey(value, propertyKey)) continue
     value[propertyKey] = Visit(schema.properties[propertyKey], references, value[propertyKey])
@@ -208,7 +207,7 @@ function FromObject(schema: TObject, references: TSchema[], value: any): unknown
   return value
 }
 function FromRecord(schema: TRecord, references: TSchema[], value: any): unknown {
-  const isConvertable = IsObject(value) && !IsArray(value)
+  const isConvertable = IsObject(value)
   if (!isConvertable) return value
   const propertyKey = Object.getOwnPropertyNames(schema.patternProperties)[0]
   const property = schema.patternProperties[propertyKey]
@@ -243,14 +242,6 @@ function FromUndefined(schema: TUndefined, references: TSchema[], value: any): u
   return TryConvertUndefined(value)
 }
 function FromUnion(schema: TUnion, references: TSchema[], value: any): unknown {
-  // Check if original value already matches one of the union variants
-  for (const subschema of schema.anyOf) {
-    if (Check(subschema, references, value)) {
-      return value
-    }
-  }
-
-  // Attempt conversion for each variant
   for (const subschema of schema.anyOf) {
     const converted = Visit(subschema, references, Clone(value))
     if (!Check(subschema, references, converted)) continue
@@ -270,8 +261,6 @@ function Visit(schema: TSchema, references: TSchema[], value: any): unknown {
       return FromBoolean(schema_, references_, value)
     case 'Date':
       return FromDate(schema_, references_, value)
-    case 'Import':
-      return FromImport(schema_, references_, value)
     case 'Integer':
       return FromInteger(schema_, references_, value)
     case 'Intersect':

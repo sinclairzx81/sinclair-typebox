@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import { Equal } from '../equal/equal'
 import { TypeBoxError } from '../../type/error/index'
 
 import { Literal, type TLiteral } from '../../type/literal/index'
-import { Object as _Object_, type TObject } from '../../type/object/index'
+import { Object, type TObject } from '../../type/object/index'
 import { String, type TString } from '../../type/string/index'
 import { Unknown, type TUnknown } from '../../type/unknown/index'
 import { Union, type TUnion } from '../../type/union/index'
@@ -57,7 +57,7 @@ export const Insert: TObject<{
   type: TLiteral<'insert'>
   path: TString
   value: TUnknown
-}> = _Object_({
+}> = Object({
   type: Literal('insert'),
   path: String(),
   value: Unknown(),
@@ -67,7 +67,7 @@ export const Update: TObject<{
   type: TLiteral<'update'>
   path: TString
   value: TUnknown
-}> = _Object_({
+}> = Object({
   type: Literal('update'),
   path: String(),
   value: Unknown(),
@@ -76,7 +76,7 @@ export type Delete = Static<typeof Delete>
 export const Delete: TObject<{
   type: TLiteral<'delete'>
   path: TString
-}> = _Object_({
+}> = Object({
   type: Literal('delete'),
   path: String(),
 })

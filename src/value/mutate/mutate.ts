@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,12 +32,6 @@ import { Clone } from '../clone/index'
 import { TypeBoxError } from '../../type/error/index'
 
 // ------------------------------------------------------------------
-// IsStandardObject
-// ------------------------------------------------------------------
-function IsStandardObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return IsObject(value) && !IsArray(value)
-}
-// ------------------------------------------------------------------
 // Errors
 // ------------------------------------------------------------------
 export class ValueMutateError extends TypeBoxError {
@@ -50,7 +44,7 @@ export class ValueMutateError extends TypeBoxError {
 // ------------------------------------------------------------------
 export type Mutable = { [key: string]: unknown } | unknown[]
 function ObjectType(root: Mutable, path: string, current: unknown, next: Record<string, unknown>) {
-  if (!IsStandardObject(current)) {
+  if (!IsObject(current)) {
     ValuePointer.Set(root, path, Clone(next))
   } else {
     const currentKeys = Object.getOwnPropertyNames(current)
@@ -96,7 +90,7 @@ function ValueType(root: Mutable, path: string, current: unknown, next: unknown)
 function Visit(root: Mutable, path: string, current: unknown, next: unknown) {
   if (IsArray(next)) return ArrayType(root, path, current, next)
   if (IsTypedArray(next)) return TypedArrayType(root, path, current, next)
-  if (IsStandardObject(next)) return ObjectType(root, path, current, next)
+  if (IsObject(next)) return ObjectType(root, path, current, next)
   if (IsValueType(next)) return ValueType(root, path, current, next)
 }
 // ------------------------------------------------------------------
@@ -108,8 +102,8 @@ function IsNonMutableValue(value: unknown): value is Mutable {
 function IsMismatchedValue(current: unknown, next: unknown) {
   // prettier-ignore
   return (
-    (IsStandardObject(current) && IsArray(next)) || 
-    (IsArray(current) && IsStandardObject(next))
+    (IsObject(current) && IsArray(next)) || 
+    (IsArray(current) && IsObject(next))
   )
 }
 // ------------------------------------------------------------------

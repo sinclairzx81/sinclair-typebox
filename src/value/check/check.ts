@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ THE SOFTWARE.
 ---------------------------------------------------------------------------*/
 
 import { TypeSystemPolicy } from '../../system/index'
-import { Deref, Pushref } from '../deref/index'
+import { Deref } from '../deref/index'
 import { Hash } from '../hash/index'
 import { Kind } from '../../type/symbols/index'
 import { KeyOfPattern } from '../../type/keyof/index'
@@ -36,11 +36,9 @@ import { TypeRegistry, FormatRegistry } from '../../type/registry/index'
 import { TypeBoxError } from '../../type/error/index'
 
 import type { TSchema } from '../../type/schema/index'
-
-import type { TAny } from '../../type/any/index'
-import type { TArgument } from '../../type/argument/index'
-import type { TArray } from '../../type/array/index'
 import type { TAsyncIterator } from '../../type/async-iterator/index'
+import type { TAny } from '../../type/any/index'
+import type { TArray } from '../../type/array/index'
 import type { TBigInt } from '../../type/bigint/index'
 import type { TBoolean } from '../../type/boolean/index'
 import type { TDate } from '../../type/date/index'
@@ -50,7 +48,6 @@ import type { TInteger } from '../../type/integer/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TIterator } from '../../type/iterator/index'
 import type { TLiteral } from '../../type/literal/index'
-import type { TImport } from '../../type/module/index'
 import { Never, type TNever } from '../../type/never/index'
 import type { TNot } from '../../type/not/index'
 import type { TNull } from '../../type/null/index'
@@ -77,9 +74,9 @@ import type { TVoid } from '../../type/void/index'
 // ------------------------------------------------------------------
 import { IsArray, IsUint8Array, IsDate, IsPromise, IsFunction, IsAsyncIterator, IsIterator, IsBoolean, IsNumber, IsBigInt, IsString, IsSymbol, IsInteger, IsNull, IsUndefined } from '../guard/index'
 // ------------------------------------------------------------------
-// KindGuard
+// TypeGuard
 // ------------------------------------------------------------------
-import { IsSchema } from '../../type/guard/kind'
+import { IsSchema } from '../../type/guard/type'
 // ------------------------------------------------------------------
 // Errors
 // ------------------------------------------------------------------
@@ -106,9 +103,6 @@ function IsDefined<T>(value: unknown): value is T {
 function FromAny(schema: TAny, references: TSchema[], value: any): boolean {
   return true
 }
-function FromArgument(schema: TArgument, references: TSchema[], value: any): boolean {
-  return true
-}
 function FromArray(schema: TArray, references: TSchema[], value: any): boolean {
   if (!IsArray(value)) return false
   if (IsDefined<number>(schema.minItems) && !(value.length >= schema.minItems)) {
@@ -117,8 +111,8 @@ function FromArray(schema: TArray, references: TSchema[], value: any): boolean {
   if (IsDefined<number>(schema.maxItems) && !(value.length <= schema.maxItems)) {
     return false
   }
-  for (const element of value) {
-    if (!Visit(schema.items, references, element)) return false
+  if (!value.every((value) => Visit(schema.items, references, value))) {
+    return false
   }
   // prettier-ignore
   if (schema.uniqueItems === true && !((function() { const set = new Set(); for(const element of value) { const hashed = Hash(element); if(set.has(hashed)) { return false } else { set.add(hashed) } } return true })())) {
@@ -190,11 +184,6 @@ function FromDate(schema: TDate, references: TSchema[], value: any): boolean {
 }
 function FromFunction(schema: TFunction, references: TSchema[], value: any): boolean {
   return IsFunction(value)
-}
-function FromImport(schema: TImport, references: TSchema[], value: any): boolean {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  return Visit(target, [...references, ...definitions], value)
 }
 function FromInteger(schema: TInteger, references: TSchema[], value: any): boolean {
   if (!IsInteger(value)) {
@@ -426,13 +415,11 @@ function FromKind(schema: TSchema, references: TSchema[], value: unknown): boole
   return func(schema, value)
 }
 function Visit<T extends TSchema>(schema: T, references: TSchema[], value: any): boolean {
-  const references_ = IsDefined<string>(schema.$id) ? Pushref(schema, references) : references
+  const references_ = IsDefined<string>(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
   switch (schema_[Kind]) {
     case 'Any':
       return FromAny(schema_, references_, value)
-    case 'Argument':
-      return FromArgument(schema_, references_, value)
     case 'Array':
       return FromArray(schema_, references_, value)
     case 'AsyncIterator':
@@ -447,8 +434,6 @@ function Visit<T extends TSchema>(schema: T, references: TSchema[], value: any):
       return FromDate(schema_, references_, value)
     case 'Function':
       return FromFunction(schema_, references_, value)
-    case 'Import':
-      return FromImport(schema_, references_, value)
     case 'Integer':
       return FromInteger(schema_, references_, value)
     case 'Intersect':

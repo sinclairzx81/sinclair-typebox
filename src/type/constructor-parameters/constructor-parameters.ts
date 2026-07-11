@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,21 +27,19 @@ THE SOFTWARE.
 ---------------------------------------------------------------------------*/
 
 import type { TSchema, SchemaOptions } from '../schema/index'
+import type { Ensure } from '../helpers/index'
 import type { TConstructor } from '../constructor/index'
 import { Tuple, type TTuple } from '../tuple/index'
-import { Never, type TNever } from '../never/index'
-import * as KindGuard from '../guard/kind'
 
 // ------------------------------------------------------------------
 // ConstructorParameters
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TConstructorParameters<Type extends TSchema> = (
-  Type extends TConstructor<infer Parameters extends TSchema[], infer _InstanceType extends TSchema>
-    ? TTuple<Parameters>
-    : TNever
+export type TConstructorParameters<T extends TConstructor<TSchema[], TSchema>> = (
+  Ensure<TTuple<T['parameters']>>
 )
+
 /** `[JavaScript]` Extracts the ConstructorParameters from the given Constructor type */
-export function ConstructorParameters<Type extends TSchema>(schema: Type, options?: SchemaOptions): TConstructorParameters<Type> {
-  return (KindGuard.IsConstructor(schema) ? Tuple(schema.parameters, options) : Never(options)) as never
+export function ConstructorParameters<T extends TConstructor<TSchema[], TSchema>>(schema: T, options?: SchemaOptions): TConstructorParameters<T> {
+  return Tuple(schema.parameters, options)
 }

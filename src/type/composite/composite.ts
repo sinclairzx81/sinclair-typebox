@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ import { IntersectEvaluated, type TIntersectEvaluated } from '../intersect/index
 import { IndexFromPropertyKeys, type TIndexFromPropertyKeys } from '../indexed/index'
 import { KeyOfPropertyKeys, type TKeyOfPropertyKeys } from '../keyof/index'
 import { type TNever } from '../never/index'
-import { Object as _Object_, type TObject, type TProperties, type ObjectOptions } from '../object/index'
+import { Object, type TObject, type TProperties, type ObjectOptions } from '../object/index'
 import { SetDistinct, TSetDistinct } from '../sets/index'
 
 // ------------------------------------------------------------------
@@ -109,7 +109,7 @@ type TCompositeEvaluate<
   T extends TSchema[], 
   K extends PropertyKey[] = TCompositeKeys<T>,
   P extends TProperties = Evaluate<TCompositeProperties<T, K>>,
-  R extends TSchema = TObject<P>
+  R extends TObject = TObject<P>
 > = R
 // prettier-ignore
 export type TComposite<T extends TSchema[]> = TCompositeEvaluate<T>
@@ -117,6 +117,6 @@ export type TComposite<T extends TSchema[]> = TCompositeEvaluate<T>
 export function Composite<T extends TSchema[]>(T: [...T], options?: ObjectOptions): TComposite<T> {
   const K = CompositeKeys(T)
   const P = CompositeProperties(T, K)
-  const R = _Object_(P, options)
+  const R = Object(P, options)
   return R as never
 }

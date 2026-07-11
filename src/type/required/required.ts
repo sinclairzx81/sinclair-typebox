@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,24 +31,12 @@ import type { TSchema, SchemaOptions } from '../schema/index'
 import type { Evaluate, Ensure } from '../helpers/index'
 import type { TMappedResult } from '../mapped/index'
 import { type TReadonlyOptional } from '../readonly-optional/index'
-import { type TComputed, Computed } from '../computed/index'
 import { type TOptional } from '../optional/index'
 import { type TReadonly } from '../readonly/index'
 import { type TRecursive } from '../recursive/index'
-import { type TObject, type TProperties, Object as _Object_ } from '../object/index'
 import { type TIntersect, Intersect } from '../intersect/index'
 import { type TUnion, Union } from '../union/index'
-import { type TRef, Ref } from '../ref/index'
-import { type TBigInt } from '../bigint/index'
-import { type TBoolean } from '../boolean/index'
-import { type TInteger } from '../integer/index'
-import { type TLiteral } from '../literal/index'
-import { type TNull } from '../null/index'
-import { type TNumber } from '../number/index'
-import { type TString } from '../string/index'
-import { type TSymbol } from '../symbol/index'
-import { type TUndefined } from '../undefined/index'
-
+import { type TObject, type TProperties, Object } from '../object/index'
 import { OptionalKind, TransformKind } from '../symbols/index'
 import { Discard } from '../discard/index'
 import { RequiredFromMappedResult, type TRequiredFromMappedResult } from './required-from-mapped-result'
@@ -56,136 +44,84 @@ import { RequiredFromMappedResult, type TRequiredFromMappedResult } from './requ
 // ------------------------------------------------------------------
 // TypeGuard
 // ------------------------------------------------------------------
-import * as KindGuard from '../guard/kind'
-
+import { IsMappedResult, IsIntersect, IsUnion, IsObject } from '../guard/kind'
 // ------------------------------------------------------------------
-// FromComputed
-// ------------------------------------------------------------------
-// prettier-ignore
-type TFromComputed<Target extends string, Parameters extends TSchema[]> = Ensure<
-  TComputed<'Required', [TComputed<Target, Parameters>]>
->
-// prettier-ignore
-function FromComputed<Target extends string, Parameters extends TSchema[]>(target: Target, parameters: Parameters): TFromComputed<Target, Parameters> {
-  return Computed('Required', [Computed(target, parameters)]) as never
-}
-// ------------------------------------------------------------------
-// FromRef
+// FromRest
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromRef<Ref extends string> = Ensure<
-  TComputed<'Required', [TRef<Ref>]>
->
+type TFromRest<T extends TSchema[], Acc extends TSchema[] = []> = (
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]]
+    ? TFromRest<R, [...Acc, TRequired<L>]>
+    : Acc
+)
 // prettier-ignore
-function FromRef<Ref extends string>($ref: Ref): TFromRef<Ref> {
-  return Computed('Required', [Ref($ref)]) as never
+function FromRest<T extends TSchema[]>(T: [...T]) : TFromRest<T> {
+  return T.map(L => RequiredResolve(L)) as never
 }
 // ------------------------------------------------------------------
 // FromProperties
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromProperties<Properties extends TProperties> = Evaluate<{
-  [K in keyof Properties]:
-    Properties[K] extends (TReadonlyOptional<infer S>) ? TReadonly<S> :
-    Properties[K] extends (TReadonly<infer S>) ? TReadonly<S> :
-    Properties[K] extends (TOptional<infer S>) ? S :
-    Properties[K]
+type TFromProperties<T extends TProperties> = Evaluate<{
+  [K in keyof T]:
+    T[K] extends (TReadonlyOptional<infer S>) ? TReadonly<S> :
+    T[K] extends (TReadonly<infer S>) ? TReadonly<S> :
+    T[K] extends (TOptional<infer S>) ? S :
+    T[K]
 }>
 // prettier-ignore
-function FromProperties<Properties extends TProperties>(properties: Properties) {
-  const requiredProperties = {} as TProperties
-  for(const K of globalThis.Object.getOwnPropertyNames(properties)) requiredProperties[K] = Discard(properties[K], [OptionalKind]) as TSchema
-  return requiredProperties as never
+function FromProperties<T extends TProperties>(T: T) {
+  const Acc = {} as TProperties
+  for(const K of globalThis.Object.getOwnPropertyNames(T)) Acc[K] = Discard(T[K], [OptionalKind]) as TSchema
+  return Acc as never
 }
 // ------------------------------------------------------------------
 // FromObject
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromObject<_Type extends TObject, Properties extends TProperties,
-  MappedProperties extends TProperties = TFromProperties<Properties>,
-  Result extends TSchema = TObject<MappedProperties>
-> = Result
+type TFromObject<T extends TObject, Properties extends TProperties = T['properties']> = Ensure<TObject<(
+  TFromProperties<Properties>
+)>>
 // prettier-ignore
-function FromObject<Type extends TObject, Properties extends TProperties>
-  (type: Type, properties: Properties): TFromObject<Type, Properties> {
-  const options = Discard(type, [TransformKind, '$id', 'required', 'properties'])
-  const mappedProperties = FromProperties(properties)
-  return _Object_(mappedProperties, options) as never
-}
-// ------------------------------------------------------------------
-// FromRest
-// ------------------------------------------------------------------
-// prettier-ignore
-type TFromRest<Types extends TSchema[], Result extends TSchema[] = []> = (
-  Types extends [infer L extends TSchema, ...infer R extends TSchema[]]
-    ? TFromRest<R, [...Result, TRequired<L>]>
-    : Result
-)
-// prettier-ignore
-function FromRest<Types extends TSchema[]>(types: [...Types]) : TFromRest<Types> {
-  return types.map(type => RequiredResolve(type)) as never
+function FromObject<T extends TObject>(T: T): TFromObject<T> {
+  const options = Discard(T, [TransformKind, '$id', 'required', 'properties'])
+  const properties = FromProperties(T['properties'])
+  return Object(properties, options) as never
 }
 // ------------------------------------------------------------------
 // RequiredResolve
 // ------------------------------------------------------------------
+
 // prettier-ignore
-function RequiredResolve<Type extends TSchema>(type: Type): TRequired<Type> {
+function RequiredResolve<T extends TSchema>(T: T): TRequired<T> {
   return (
-    // Mappable
-    KindGuard.IsComputed(type) ? FromComputed(type.target, type.parameters) :
-    KindGuard.IsRef(type) ? FromRef(type.$ref) :
-    KindGuard.IsIntersect(type) ? Intersect(FromRest(type.allOf)) :
-    KindGuard.IsUnion(type) ?  Union(FromRest(type.anyOf)) :
-    KindGuard.IsObject(type) ? FromObject(type, type.properties) :
-    // Intrinsic
-    KindGuard.IsBigInt(type) ? type :
-    KindGuard.IsBoolean(type) ? type :
-    KindGuard.IsInteger(type) ? type :
-    KindGuard.IsLiteral(type) ? type :
-    KindGuard.IsNull(type) ? type :
-    KindGuard.IsNumber(type) ? type :
-    KindGuard.IsString(type) ? type :
-    KindGuard.IsSymbol(type) ? type :
-    KindGuard.IsUndefined(type) ? type :
-    // Passthrough
-    _Object_({})
+    IsIntersect(T) ? Intersect(FromRest(T.allOf)) :
+    IsUnion(T) ?  Union(FromRest(T.anyOf)) :
+    IsObject(T) ? FromObject(T) :
+    Object({})
   ) as never
 }
 // ------------------------------------------------------------------
 // TRequired
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TRequired<Type extends TSchema> = (
-  // Mappable
-  Type extends TRecursive<infer Type extends TSchema> ? TRecursive<TRequired<Type>> :
-  Type extends TComputed<infer Target extends string, infer Parameters extends TSchema[]> ? TFromComputed<Target, Parameters> :
-  Type extends TRef<infer Ref extends string> ? TFromRef<Ref> :
-  Type extends TIntersect<infer Types extends TSchema[]> ? TIntersect<TFromRest<Types>> :
-  Type extends TUnion<infer Types extends TSchema[]> ? TUnion<TFromRest<Types>> :
-  Type extends TObject<infer Properties extends TProperties> ? TFromObject<TObject, Properties> :
-  // Intrinsic
-  Type extends TBigInt ? Type :
-  Type extends TBoolean ? Type :
-  Type extends TInteger ? Type :
-  Type extends TLiteral ? Type :
-  Type extends TNull ? Type :
-  Type extends TNumber ? Type :
-  Type extends TString ? Type :
-  Type extends TSymbol ? Type :
-  Type extends TUndefined ? Type :
-  // Passthrough
+export type TRequired<T extends TSchema> = (
+  T extends TRecursive<infer S extends TSchema> ? TRecursive<TRequired<S>> :
+  T extends TIntersect<infer S extends TSchema[]> ? TIntersect<TFromRest<S>> :
+  T extends TUnion<infer S extends TSchema[]> ? TUnion<TFromRest<S>> :
+  T extends TObject<infer S extends TProperties> ? TFromObject<TObject<S>> :
   TObject<{}>
 )
 /** `[Json]` Constructs a type where all properties are required */
-export function Required<MappedResult extends TMappedResult>(type: MappedResult, options?: SchemaOptions): TRequiredFromMappedResult<MappedResult>
+export function Required<T extends TMappedResult>(T: T, options?: SchemaOptions): TRequiredFromMappedResult<T>
 /** `[Json]` Constructs a type where all properties are required */
-export function Required<Type extends TSchema>(type: Type, options?: SchemaOptions): TRequired<Type>
+export function Required<T extends TSchema>(T: T, options?: SchemaOptions): TRequired<T>
 /** `[Json]` Constructs a type where all properties are required */
-export function Required<Type extends TSchema>(type: Type, options?: SchemaOptions): never {
-  if (KindGuard.IsMappedResult(type)) {
-    return RequiredFromMappedResult(type, options) as never
+export function Required<T extends TSchema>(T: T, options?: SchemaOptions): never {
+  if (IsMappedResult(T)) {
+    return RequiredFromMappedResult(T, options) as never
   } else {
     // special: mapping types require overridable options
-    return CreateType({ ...RequiredResolve(type), ...options }) as never
+    return CreateType({ ...RequiredResolve(T), ...options }) as never
   }
 }

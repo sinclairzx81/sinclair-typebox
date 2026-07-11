@@ -1,6 +1,6 @@
 {
   "name": "@sinclair/typebox",
-  "version": "0.34.51",
+  "version": "0.33.22",
   "description": "Json Schema Type Builder with Static Type Resolution for TypeScript",
   "keywords": [
     "typescript",
@@ -10,10 +10,9 @@
   ],
   "author": "sinclairzx81",
   "license": "MIT",
-  "homepage": "https://github.com/sinclairzx81/sinclair-typebox",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sinclairzx81/sinclair-typebox"
+    "url": "https://github.com/sinclairzx81/typebox"
   },
   "scripts": {
     "test:typescript": "hammer task test_typescript",
@@ -21,7 +20,6 @@
     "test:runtime": "hammer task test_runtime",
     "install:local": "hammer task install_local",
     "benchmark": "hammer task benchmark",
-    "build:to": "hammer task build_to",
     "build": "hammer task build",
     "test": "hammer task test",
     "clean": "hammer task clean",
@@ -34,14 +32,11 @@
     "@arethetypeswrong/cli": "^0.13.2",
     "@sinclair/hammer": "^0.18.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^22.13.5",
+    "@types/node": "^20.10.1",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
-    "mocha": "^11.3.0",
+    "mocha": "^10.4.0",
     "prettier": "^2.7.1",
-    "typescript": "^7.0.2"
-  },
-  "allowScripts": {
-    "esbuild@0.15.7": true
+    "typescript": "^5.6.3"
   }
 }

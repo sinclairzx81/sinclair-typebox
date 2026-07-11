@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,43 +44,43 @@ import { IsOptional } from '../guard/kind'
 // IsUnionOptional
 // ------------------------------------------------------------------
 // prettier-ignore
-type TIsUnionOptional<Types extends TSchema[]> = (
-  Types extends [infer Left extends TSchema, ...infer Right extends TSchema[]] ? 
-    Left extends TOptional<TSchema> 
+type TIsUnionOptional<T extends TSchema[]> = (
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]] ? 
+    L extends TOptional<TSchema> 
       ? true 
-      : TIsUnionOptional<Right> 
+      : TIsUnionOptional<R> 
     : false
 )
 // prettier-ignore
-function IsUnionOptional<Types extends TSchema[]>(types: Types): TIsUnionOptional<Types> {
-  return types.some(type => IsOptional(type)) as never
+function IsUnionOptional<T extends TSchema[]>(T: T): TIsUnionOptional<T> {
+  return T.some(L => IsOptional(L)) as never
 }
 // ------------------------------------------------------------------
 // RemoveOptionalFromRest
 // ------------------------------------------------------------------
 // prettier-ignore
-type TRemoveOptionalFromRest<Types extends TSchema[], Result extends TSchema[] = []> = (
-  Types extends [infer Left extends TSchema, ...infer Right extends TSchema[]]
-    ? Left extends TOptional<infer S extends TSchema>
-      ? TRemoveOptionalFromRest<Right, [...Result, TRemoveOptionalFromType<S>]>
-      : TRemoveOptionalFromRest<Right, [...Result, Left]>
-    : Result
+type TRemoveOptionalFromRest<T extends TSchema[], Acc extends TSchema[] = []> = (
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]]
+    ? L extends TOptional<infer S extends TSchema>
+      ? TRemoveOptionalFromRest<R, [...Acc, TRemoveOptionalFromType<S>]>
+      : TRemoveOptionalFromRest<R, [...Acc, L]>
+    : Acc
 )
 // prettier-ignore
-function RemoveOptionalFromRest<Types extends TSchema[]>(types: Types): TRemoveOptionalFromRest<Types> {
-  return types.map(left => IsOptional(left) ? RemoveOptionalFromType(left) : left) as never
+function RemoveOptionalFromRest<T extends TSchema[]>(T: T): TRemoveOptionalFromRest<T> {
+  return T.map(L => IsOptional(L) ? RemoveOptionalFromType(L) : L) as never
 }
 // ------------------------------------------------------------------
 // RemoveOptionalFromType
 // ------------------------------------------------------------------
 // prettier-ignore
-type TRemoveOptionalFromType<Type extends TSchema> = (
-  Type extends TReadonly<infer Type extends TSchema> ? TReadonly<TRemoveOptionalFromType<Type>> :
-  Type extends TOptional<infer Type extends TSchema> ? TRemoveOptionalFromType<Type> :
-  Type
+type TRemoveOptionalFromType<T extends TSchema> = (
+  T extends TReadonly<infer S extends TSchema> ? TReadonly<TRemoveOptionalFromType<S>> :
+  T extends TOptional<infer S extends TSchema> ? TRemoveOptionalFromType<S> :
+  T
 )
 // prettier-ignore
-function RemoveOptionalFromType<Type extends TSchema>(T: Type): TRemoveOptionalFromType<Type> {
+function RemoveOptionalFromType<T extends TSchema>(T: T): TRemoveOptionalFromType<T> {
   return (
     Discard(T, [OptionalKind])
   ) as never
@@ -89,38 +89,34 @@ function RemoveOptionalFromType<Type extends TSchema>(T: Type): TRemoveOptionalF
 // ResolveUnion
 // ------------------------------------------------------------------
 // prettier-ignore
-type TResolveUnion<Types extends TSchema[], 
-  Result extends TSchema[] = TRemoveOptionalFromRest<Types>,
-  IsOptional extends boolean = TIsUnionOptional<Types>
-> = (
-  IsOptional extends true 
-    ? TOptional<TUnion<Result>> 
-    : TUnion<Result>
+type TResolveUnion<T extends TSchema[], R extends TSchema[] = TRemoveOptionalFromRest<T>> = (
+  TIsUnionOptional<T> extends true 
+    ? TOptional<TUnion<R>> 
+    : TUnion<R>
 )
 // prettier-ignore
-function ResolveUnion<Types extends TSchema[]>(types: Types, options?: SchemaOptions): TResolveUnion<Types> {
-  const isOptional = IsUnionOptional(types)
+function ResolveUnion<T extends TSchema[]>(T: T, options?: SchemaOptions): TResolveUnion<T> {
   return (
-    isOptional
-      ? Optional(UnionCreate(RemoveOptionalFromRest(types) as TSchema[], options))
-      : UnionCreate(RemoveOptionalFromRest(types) as TSchema[], options)
+    IsUnionOptional(T)
+      ? Optional(UnionCreate(RemoveOptionalFromRest(T) as TSchema[], options))
+      : UnionCreate(RemoveOptionalFromRest(T) as TSchema[], options)
   ) as never
 }
 // ------------------------------------------------------------------
 // Union
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TUnionEvaluated<Types extends TSchema[]> = (
-  Types extends [TSchema] ? Types[0] :
-  Types extends [] ? TNever :
-  TResolveUnion<Types>
+export type TUnionEvaluated<T extends TSchema[]> = (
+  T extends [] ? TNever :
+  T extends [TSchema] ? T[0] :
+  TResolveUnion<T>
 )
 /** `[Json]` Creates an evaluated Union type */
-export function UnionEvaluated<Types extends TSchema[], Result = TUnionEvaluated<Types>>(T: [...Types], options?: SchemaOptions): Result {
+export function UnionEvaluated<T extends TSchema[], R = TUnionEvaluated<T>>(T: [...T], options?: SchemaOptions): R {
   // prettier-ignore
   return (
-    T.length === 1 ? CreateType(T[0], options) :
     T.length === 0 ? Never(options) :
+    T.length === 1 ? CreateType(T[0], options) :
     ResolveUnion(T, options)
   ) as never
 }

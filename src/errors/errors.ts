@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,6 @@ import type { TBoolean } from '../type/boolean/index'
 import type { TDate } from '../type/date/index'
 import type { TConstructor } from '../type/constructor/index'
 import type { TFunction } from '../type/function/index'
-import type { TImport } from '../type/module/index'
 import type { TInteger } from '../type/integer/index'
 import type { TIntersect } from '../type/intersect/index'
 import type { TIterator } from '../type/iterator/index'
@@ -222,7 +221,6 @@ function Create(errorType: ValueErrorType, schema: TSchema, path: string, value:
 // Types
 // --------------------------------------------------------------------------
 function* FromAny(schema: TAny, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {}
-function* FromArgument(schema: TAny, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {}
 function* FromArray(schema: TArray, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
   if (!IsArray(value)) {
     return yield Create(ValueErrorType.Array, schema, path, value)
@@ -303,11 +301,6 @@ function* FromDate(schema: TDate, references: TSchema[], path: string, value: an
 }
 function* FromFunction(schema: TFunction, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
   if (!IsFunction(value)) yield Create(ValueErrorType.Function, schema, path, value)
-}
-function* FromImport(schema: TImport, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  yield* Visit(target, [...references, ...definitions], path, value)
 }
 function* FromInteger(schema: TInteger, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
   if (!IsInteger(value)) return yield Create(ValueErrorType.Integer, schema, path, value)
@@ -559,8 +552,6 @@ function* Visit<T extends TSchema>(schema: T, references: TSchema[], path: strin
   switch (schema_[Kind]) {
     case 'Any':
       return yield* FromAny(schema_, references_, path, value)
-    case 'Argument':
-      return yield* FromArgument(schema_, references_, path, value)
     case 'Array':
       return yield* FromArray(schema_, references_, path, value)
     case 'AsyncIterator':
@@ -575,8 +566,6 @@ function* Visit<T extends TSchema>(schema: T, references: TSchema[], path: strin
       return yield* FromDate(schema_, references_, path, value)
     case 'Function':
       return yield* FromFunction(schema_, references_, path, value)
-    case 'Import':
-      return yield* FromImport(schema_, references_, path, value)
     case 'Integer':
       return yield* FromInteger(schema_, references_, path, value)
     case 'Intersect':

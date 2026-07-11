@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@ THE SOFTWARE.
 ---------------------------------------------------------------------------*/
 
 export * from './any/index'
-export * from './argument/index'
 export * from './array/index'
 export * from './async-iterator/index'
 export * from './awaited/index'
@@ -39,6 +38,7 @@ export * from './const/index'
 export * from './constructor/index'
 export * from './constructor-parameters/index'
 export * from './date/index'
+export * from './deref/index'
 export * from './discard/index'
 export * from './enum/index'
 export * from './error/index'
@@ -50,7 +50,6 @@ export * from './guard/index'
 export * from './helpers/index'
 export * from './indexed/index'
 export * from './instance-type/index'
-export * from './instantiate/index'
 export * from './integer/index'
 export * from './intersect/index'
 export * from './intrinsic/index'
@@ -58,7 +57,6 @@ export * from './iterator/index'
 export * from './keyof/index'
 export * from './literal/index'
 export * from './mapped/index'
-export * from './module/index'
 export * from './never/index'
 export * from './not/index'
 export * from './null/index'
@@ -84,6 +82,7 @@ export * from './return-type/index'
 export * from './schema/index'
 export * from './sets/index'
 export * from './static/index'
+export * from './strict/index'
 export * from './string/index'
 export * from './symbol/index'
 export * from './symbols/index'

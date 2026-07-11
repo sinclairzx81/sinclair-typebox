@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ function writeRedirect(target: string, submodule: string) {
 }
 // --------------------------------------------------------------------------------------------------------------------------
 // Builds redirect directories for earlier versions of Node. Note that TypeScript will use these directories to
-// resolve types when tsconfig.json is configured for `moduleResolution: 'Node16'`. This approach is referred to as
+// resolve types when tsconfig.json is configured for `moduleResolution: 'node'`. This approach is referred to as
 // `package-json-redirect` and enables correct type resolution in lieu of a correct end user configuration.
 //
 // https://github.com/andrewbranch/example-subpath-exports-ts-compat/tree/main/examples/node_modules/package-json-redirects

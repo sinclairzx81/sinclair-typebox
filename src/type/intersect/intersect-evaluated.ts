@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,77 +46,77 @@ import { IsOptional, IsTransform } from '../guard/kind'
 // IsIntersectOptional
 // ------------------------------------------------------------------
 // prettier-ignore
-type TIsIntersectOptional<Types extends TSchema[]> = (
-  Types extends [infer Left extends TSchema, ...infer Right extends TSchema[]] 
-    ? Left extends TOptional<TSchema> 
-      ? TIsIntersectOptional<Right> 
+type TIsIntersectOptional<T extends TSchema[]> = (
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]] 
+    ? L extends TOptional<TSchema> 
+      ? TIsIntersectOptional<R> 
       : false 
     : true
 )
 // prettier-ignore
-function IsIntersectOptional<Types extends TSchema[]>(types: [...Types]): TIsIntersectOptional<Types> {
-  return types.every(left => IsOptional(left)) as never
+function IsIntersectOptional<T extends TSchema[]>(T: T): TIsIntersectOptional<T> {
+  return T.every(L => IsOptional(L)) as never
 }
 // ------------------------------------------------------------------
 // RemoveOptionalFromType
 // ------------------------------------------------------------------
 // prettier-ignore
-type TRemoveOptionalFromType<Type extends TSchema> = (
-  Type extends TReadonly<infer Type extends TSchema> ? TReadonly<TRemoveOptionalFromType<Type>> :
-  Type extends TOptional<infer Type extends TSchema> ? TRemoveOptionalFromType<Type> :
-  Type
+type TRemoveOptionalFromType<T extends TSchema> = (
+  T extends TReadonly<infer S extends TSchema> ? TReadonly<TRemoveOptionalFromType<S>> :
+  T extends TOptional<infer S extends TSchema> ? TRemoveOptionalFromType<S> :
+  T
 )
 // prettier-ignore
-function RemoveOptionalFromType<Type extends TSchema>(type: Type): TRemoveOptionalFromType<Type> {
+function RemoveOptionalFromType<T extends TSchema>(T: T): TRemoveOptionalFromType<T> {
   return (
-    Discard(type, [OptionalKind])
+    Discard(T, [OptionalKind])
     ) as never
 }
 // ------------------------------------------------------------------
 // RemoveOptionalFromRest
 // ------------------------------------------------------------------
 // prettier-ignore
-type TRemoveOptionalFromRest<Types extends TSchema[], Result extends TSchema[] = []> = (
-  Types extends [infer Left extends TSchema, ...infer Right extends TSchema[]]
-  ? Left extends TOptional<infer Type extends TSchema>
-    ? TRemoveOptionalFromRest<Right, [...Result, TRemoveOptionalFromType<Type>]>
-    : TRemoveOptionalFromRest<Right, [...Result, Left]>
-  : Result
+type TRemoveOptionalFromRest<T extends TSchema[], Acc extends TSchema[] = []> = (
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]]
+  ? L extends TOptional<infer S extends TSchema>
+    ? TRemoveOptionalFromRest<R, [...Acc, TRemoveOptionalFromType<S>]>
+    : TRemoveOptionalFromRest<R, [...Acc, L]>
+  : Acc
 )
 // prettier-ignore
-function RemoveOptionalFromRest<Types extends TSchema[]>(types: [...Types]): TRemoveOptionalFromRest<Types> {
-  return types.map(left => IsOptional(left) ? RemoveOptionalFromType(left) : left) as never
+function RemoveOptionalFromRest<T extends TSchema[]>(T: T): TRemoveOptionalFromRest<T> {
+  return T.map(L => IsOptional(L) ? RemoveOptionalFromType(L) : L) as never
 }
 // ------------------------------------------------------------------
 // ResolveIntersect
 // ------------------------------------------------------------------
 // prettier-ignore
-type TResolveIntersect<Types extends TSchema[]> = (
-  TIsIntersectOptional<Types> extends true 
-    ? TOptional<TIntersect<TRemoveOptionalFromRest<Types>>> 
-    : TIntersect<TRemoveOptionalFromRest<Types>>
+type TResolveIntersect<T extends TSchema[]> = (
+  TIsIntersectOptional<T> extends true 
+    ? TOptional<TIntersect<TRemoveOptionalFromRest<T>>> 
+    : TIntersect<TRemoveOptionalFromRest<T>>
 )
 // prettier-ignore
-function ResolveIntersect<Types extends TSchema[]>(types: [...Types], options: SchemaOptions): TResolveIntersect<Types> {
+function ResolveIntersect<T extends TSchema[]>(T: [...T], options: SchemaOptions): TResolveIntersect<T> {
   return (
-    IsIntersectOptional(types)
-      ? Optional(IntersectCreate(RemoveOptionalFromRest(types) as TSchema[], options))
-      : IntersectCreate(RemoveOptionalFromRest(types) as TSchema[], options)
+    IsIntersectOptional(T)
+      ? Optional(IntersectCreate(RemoveOptionalFromRest(T) as TSchema[], options))
+      : IntersectCreate(RemoveOptionalFromRest(T) as TSchema[], options)
   ) as never
 }
 // ------------------------------------------------------------------
 // IntersectEvaluated
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TIntersectEvaluated<Types extends TSchema[]> = (
-  Types extends [TSchema] ? Types[0] :
-  Types extends [] ? TNever :
-  TResolveIntersect<Types>
+export type TIntersectEvaluated<T extends TSchema[]> = (
+  T extends [] ? TNever :
+  T extends [TSchema] ? T[0] :
+  TResolveIntersect<T>
 )
 /** `[Json]` Creates an evaluated Intersect type */
-export function IntersectEvaluated<Types extends TSchema[], Result extends TSchema = TIntersectEvaluated<Types>>(types: [...Types], options: IntersectOptions = {}): Result {
-  if (types.length === 1) return CreateType(types[0], options) as never
-  if (types.length === 0) return Never(options) as never
-  if (types.some((schema) => IsTransform(schema))) throw new Error('Cannot intersect transform types')
-  return ResolveIntersect(types, options) as never
+export function IntersectEvaluated<T extends TSchema[], R = TIntersectEvaluated<T>>(T: [...T], options: IntersectOptions = {}): R {
+  if (T.length === 0) return Never(options) as never
+  if (T.length === 1) return CreateType(T[0], options) as never
+  if (T.some((schema) => IsTransform(schema))) throw new Error('Cannot intersect transform types')
+  return ResolveIntersect(T, options) as never
 }

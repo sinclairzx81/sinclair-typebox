@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,7 +44,6 @@ export * from './type/symbols/index'
 // ------------------------------------------------------------------
 export * from './type/any/index'
 export * from './type/array/index'
-export * from './type/argument/index'
 export * from './type/async-iterator/index'
 export * from './type/awaited/index'
 export * from './type/bigint/index'
@@ -54,6 +53,7 @@ export * from './type/const/index'
 export * from './type/constructor/index'
 export * from './type/constructor-parameters/index'
 export * from './type/date/index'
+export * from './type/deref/index'
 export * from './type/enum/index'
 export * from './type/exclude/index'
 export * from './type/extends/index'
@@ -61,14 +61,12 @@ export * from './type/extract/index'
 export * from './type/function/index'
 export * from './type/indexed/index'
 export * from './type/instance-type/index'
-export * from './type/instantiate/index'
 export * from './type/integer/index'
 export * from './type/intersect/index'
 export * from './type/iterator/index'
 export * from './type/intrinsic/index'
 export * from './type/keyof/index'
 export * from './type/literal/index'
-export * from './type/module/index'
 export * from './type/mapped/index'
 export * from './type/never/index'
 export * from './type/not/index'
@@ -92,6 +90,7 @@ export * from './type/rest/index'
 export * from './type/return-type/index'
 export * from './type/schema/index'
 export * from './type/static/index'
+export * from './type/strict/index'
 export * from './type/string/index'
 export * from './type/symbol/index'
 export * from './type/template-literal/index'

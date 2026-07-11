@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,6 @@ export interface TNot<T extends TSchema = TSchema> extends TSchema {
   not: T
 }
 /** `[Json]` Creates a Not type */
-export function Not<Type extends TSchema>(type: Type, options?: SchemaOptions): TNot<Type> {
-  return CreateType({ [Kind]: 'Not', not: type }, options) as never
+export function Not<T extends TSchema>(not: T, options?: SchemaOptions): TNot<T> {
+  return CreateType({ [Kind]: 'Not', not }, options) as never
 }

@@ -1,10 +1,10 @@
 <div align='center'>
 
-<h1>Sinclair TypeBox</h1>
+<h1>TypeBox</h1>
 
 <p>Json Schema Type Builder with Static Type Resolution for TypeScript</p>
 
-<img src="https://raw.githubusercontent.com/sinclairzx81/sinclair-typebox/refs/heads/main/typebox.png" />
+<img src="https://github.com/sinclairzx81/typebox/blob/master/typebox.png?raw=true" />
 
 <br />
 <br />
@@ -16,17 +16,12 @@
 
 </div>
 
-
 <a name="Install"></a>
 
 ## Install
 
-For the latest version use [TypeBox 1.x](https://github.com/sinclairzx81/typebox) 
-
 ```bash
-$ npm install @sinclair/typebox                     # TypeBox 0.x - Long Term Support
-
-$ npm install typebox                               # TypeBox 1.x - Latest
+$ npm install @sinclair/typebox --save
 ```
 
 ## Example
@@ -51,6 +46,7 @@ type T = Static<typeof T>                            // type T = {
                                                      // }
 ```
 
+
 <a name="Overview"></a>
 
 ## Overview
@@ -68,11 +64,12 @@ License MIT
 - [Types](#types)
   - [Json](#types-json)
   - [JavaScript](#types-javascript)
+  - [Import](#types-import)
   - [Options](#types-options)
   - [Properties](#types-properties)
   - [Generics](#types-generics)
+  - [References](#types-references)
   - [Recursive](#types-recursive)
-  - [Modules](#types-modules)
   - [Template Literal](#types-template-literal)
   - [Indexed](#types-indexed)
   - [Mapped](#types-mapped)
@@ -99,20 +96,12 @@ License MIT
   - [Errors](#values-errors)
   - [Mutate](#values-mutate)
   - [Pointer](#values-pointer)
-- [Syntax](#syntax)
-  - [Create](#syntax-create)
-  - [Parameters](#syntax-parameters)
-  - [Generics](#syntax-generics)
-  - [Options](#syntax-options)
-  - [NoInfer](#syntax-no-infer)
 - [TypeRegistry](#typeregistry)
   - [Type](#typeregistry-type)
   - [Format](#typeregistry-format)
 - [TypeCheck](#typecheck)
   - [Ajv](#typecheck-ajv)
   - [TypeCompiler](#typecheck-typecompiler)
-- [TypeMap](#typemap)
-  - [Usage](#typemap-usage)
 - [TypeSystem](#typesystem)
   - [Policies](#typesystem-policies)
 - [Error Function](#error-function)
@@ -342,7 +331,7 @@ The following table lists the supported Json types. These types are fully compat
 │   }),                          │   y: number                 │     required: ['x'],           │
 │   Type.Object({                │ }                           │     properties: {              │
 │     y: Type.Number()           │                             │       x: {                     │
-│   })                           │                             │         type: 'number'         │
+│   ])                           │                             │         type: 'number'         │
 │ ])                             │                             │       }                        │
 │                                │                             │     }                          │
 │                                │                             │   }, {                         │
@@ -539,7 +528,15 @@ The following table lists the supported Json types. These types are fully compat
 │                                │                             │ }                              │
 │                                │                             │                                │
 ├────────────────────────────────┼─────────────────────────────┼────────────────────────────────┤
-│ const R = Type.Ref('T')        │ type R = unknown            │ const R = { $ref: 'T' }        │
+│ const T = Type.Object({        │ type T = {                  │ const R = {                    │
+│    x: Type.Number(),           │   x: number,                │   $ref: 'T'                    │
+│    y: Type.Number()            │   y: number                 │ }                              │
+│ }, { $id: 'T' })               | }                           │                                │
+│                                │                             │                                │
+│ const R = Type.Ref(T)          │ type R = T                  │                                │
+│                                │                             │                                │
+│                                │                             │                                │
+│                                │                             │                                │
 │                                │                             │                                │
 └────────────────────────────────┴─────────────────────────────┴────────────────────────────────┘
 ```
@@ -548,7 +545,7 @@ The following table lists the supported Json types. These types are fully compat
 
 ### JavaScript Types
 
-TypeBox provides an extended type set that can be used to create schematics for common JavaScript constructs. These types can not be used with any standard Json Schema validator; but can be used to frame schematics for interfaces that may receive Json validated data. JavaScript types are prefixed with the `[JavaScript]` JSDoc comment for convenience. The following table lists the supported types.
+TypeBox provides an extended type set that can be used to create schematics for common JavaScript constructs. These types can not be used with any standard Json Schema validator; but can be used to frame schematics for interfaces that may receive Json validated data. JavaScript types are prefixed with the `[JavaScript]` jsdoc comment for convenience. The following table lists the supported types.
 
 ```typescript
 ┌────────────────────────────────┬─────────────────────────────┬────────────────────────────────┐
@@ -644,6 +641,22 @@ TypeBox provides an extended type set that can be used to create schematics for 
 └────────────────────────────────┴─────────────────────────────┴────────────────────────────────┘
 ```
 
+<a name='types-import'></a>
+
+### Import
+
+Import the Type namespace to bring in the full TypeBox type system. This is recommended for most users.
+
+```typescript
+import { Type, type Static } from '@sinclair/typebox'
+```
+
+You can also selectively import types. This enables modern bundlers to tree shake for unused types.
+
+```typescript
+import { Object, Number, String, Boolean, type Static } from '@sinclair/typebox'
+```
+
 <a name='types-options'></a>
 
 ### Options
@@ -721,21 +734,103 @@ Object properties can be modified with Readonly and Optional. The following tabl
 
 ### Generic Types
 
-Generic types can be created with generic functions.
+Generic types can be created with functions. TypeBox types extend the TSchema interface so you should constrain parameters to this type. The following creates a generic Vector type.
 
 ```typescript
-const Nullable = <T extends TSchema>(T: T) => {     // type Nullable<T> = T | null
-  return Type.Union([T, Type.Null()])
-}
+import { Type, type Static, type TSchema } from '@sinclair/typebox'
 
-const T = Nullable(Type.String())                  // type T = Nullable<string>
+const Vector = <T extends TSchema>(T: T) => 
+  Type.Object({                                      // type Vector<T> = {
+    x: T,                                            //   x: T,
+    y: T,                                            //   y: T,
+    z: T                                             //   z: T
+  })                                                 // }
+
+const NumberVector = Vector(Type.Number())           // type NumberVector = Vector<number>
 ```
+
+Generic types are often used to create aliases for complex types. The following creates a Nullable generic type.
+
+```typescript
+const Nullable = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()])
+
+const T = Nullable(Type.String())                    // const T = {
+                                                     //   anyOf: [
+                                                     //     { type: 'string' },
+                                                     //     { type: 'null' }
+                                                     //   ]
+                                                     // }
+
+type T = Static<typeof T>                            // type T = string | null
+```
+
+<a name='types-references'></a>
+
+### Reference Types
+
+Reference types can be created with Ref. These types infer the same as the target type but only store a named `$ref` to the target type.
+
+```typescript
+const Vector = Type.Object({                         // const Vector = {
+  x: Type.Number(),                                  //   type: 'object',
+  y: Type.Number(),                                  //   required: ['x', 'y', 'z'],
+}, { $id: 'Vector' })                                //   properties: {
+                                                     //     x: { type: 'number' },
+                                                     //     y: { type: 'number' }
+                                                     //   },
+                                                     //   $id: 'Vector'
+                                                     // }
+
+const VectorRef = Type.Ref(Vector)                   // const VectorRef = {
+                                                     //   $ref: 'Vector'
+                                                     // }
+
+type VectorRef = Static<typeof VectorRef>            // type VectorRef = {
+                                                     //    x: number,
+                                                     //    y: number
+                                                     // }
+```
+Use Deref to dereference a type. This function will replace any interior reference with the target type.
+```typescript
+const Vertex = Type.Object({                         // const Vertex = {
+  position: VectorRef,                               //   type: 'object',
+  texcoord: VectorRef,                               //   required: ['position', 'texcoord'],
+})                                                   //   properties: {
+                                                     //     position: { $ref: 'Vector' },
+                                                     //     texcoord: { $ref: 'Vector' }
+                                                     //   }
+                                                     // }
+
+const VertexDeref = Type.Deref(Vertex, [Vector])     // const VertexDeref = {
+                                                     //   type: 'object',
+                                                     //   required: ['position', 'texcoord'],
+                                                     //   properties: {
+                                                     //     position: {
+                                                     //       type: 'object',
+                                                     //       required: ['x', 'y', 'z'],
+                                                     //       properties: {
+                                                     //         x: { type: 'number' },
+                                                     //         y: { type: 'number' }
+                                                     //       }
+                                                     //     },
+                                                     //     texcoord: {
+                                                     //       type: 'object',
+                                                     //       required: ['x', 'y', 'z'],
+                                                     //       properties: {
+                                                     //         x: { type: 'number' },
+                                                     //         y: { type: 'number' }
+                                                     //       }
+                                                     //     }
+                                                     //   }
+                                                     // }
+```
+Note that Ref types do not store structural information about the type they're referencing. Because of this, these types cannot be used with some mapping types (such as Partial or Pick). For applications that require mapping on Ref, use Deref to normalize the type first.
 
 <a name='types-recursive'></a>
 
 ### Recursive Types
 
-Use the Recursive function to create recursive types.
+TypeBox supports recursive data structures with Recursive. This type wraps an interior type and provides it a `this` context that allows the type to reference itself. The following creates a recursive type. Singular recursive inference is also supported.
 
 ```typescript
 const Node = Type.Recursive(This => Type.Object({    // const Node = {
@@ -766,39 +861,6 @@ type Node = Static<typeof Node>                      // type Node = {
 function test(node: Node) {
   const id = node.nodes[0].nodes[0].id               // id is string
 }
-```
-
-<a name='types-modules'></a>
-
-### Module Types
-
-Module types are containers for a set of referential types. Modules act as namespaces, enabling types to reference one another via string identifiers. Modules support both singular and mutually recursive references, as well as deferred dereferencing for computed types such as Partial. Types imported from a module are expressed using the Json Schema `$defs` keyword. 
-
-```typescript
-const Module = Type.Module({
-  PartialUser: Type.Partial(Type.Ref('User')),  // TComputed<'Partial', [TRef<'User'>]>
-
-  User: Type.Object({                           // TObject<{
-    id: Type.String(),                          //   user: TString,
-    name: Type.String(),                        //   name: TString,
-    email: Type.String()                        //   email: TString
-  }),                                           // }>
-})
-const User = Module.Import('User')               // const User: TImport<{...}, 'User'>
-
-type User = Static<typeof User>                  // type User = { 
-                                                 //   id: string,
-                                                 //   name: string,
-                                                 //   email: string
-                                                 // }
-
-const PartialUser = Module.Import('PartialUser') // const PartialUser: TImport<{...}, 'PartialUser'>
-
-type PartialUser = Static<typeof PartialUser>    // type PartialUser = { 
-                                                 //   id?: string,
-                                                 //   name?: string,
-                                                 //   email?: string
-                                                 // }
 ```
 
 <a name='types-template-literal'></a>
@@ -879,7 +941,7 @@ const C = Type.Index(T, Type.KeyOf(T))               // type C = T[keyof T]
 
 ### Mapped Types
 
-TypeBox supports mapped types with the Mapped function. This function accepts two arguments, the first is a union type typically derived from KeyOf, the second is a mapping function that receives a mapping key `K` that can be used to index properties of a type. The following implements a mapped type that remaps each property to be `T | null`.
+TypeBox supports mapped types with the Mapped function. This function accepts two arguments, the first is a union type typically derived from KeyOf, the second is a mapping function that receives a mapping key `K` that can be used to index properties of a type. The following implements a mapped type that remaps each property to be `T | null`
 
 ```typescript
 const T = Type.Object({                              // type T = {
@@ -1127,7 +1189,7 @@ const Z = Value.Default(T, { x: 1 })                    // const 'Z = { x: 1, y:
 
 ### Cast
 
-Use the Cast function to upcast a value into a target type. This function will retain as much information as possible from the original value. The Cast function is intended to be used in data migration scenarios where existing values need to be upgraded to match a modified type.
+Use the Cast function to upcast a value into a target type. This function will retain as much infomation as possible from the original value. The Cast function is intended to be used in data migration scenarios where existing values need to be upgraded to match a modified type.
 
 ```typescript
 const T = Type.Object({ x: Type.Number(), y: Type.Number() }, { additionalProperties: false })
@@ -1166,28 +1228,26 @@ const B = Value.Encode(Type.String(), 42)             // throw
 
 ### Parse
 
-Use the Parse function to parse a value. This function calls the `Clone` `Clean`, `Default`, `Convert`, `Assert` and `Decode` Value functions in this exact order to process a value.
+Use the Parse function to parse a value or throw if invalid. This function internally uses Default, Clean, Convert and Decode to make a best effort attempt to parse the value into the expected type. This function should not be used in performance critical code paths.
 
 ```typescript
-const R = Value.Parse(Type.String(), 'hello')      // const R: string = "hello"
+const T = Type.Object({ x: Type.Number({ default: 0 }), y: Type.Number({ default: 0 }) })
 
-const E = Value.Parse(Type.String(), undefined)    // throws AssertError 
-```
+// Default
 
-You can override the order in which functions are run, or omit functions entirely using the following.
+const A = Value.Parse(T, { })                                 // const A = { x: 0, y: 0 }
 
-```typescript
-// Runs no functions.
+// Convert
 
-const R = Value.Parse([], Type.String(), 12345)
+const B = Value.Parse(T, { x: '1', y: '2' })                  // const B = { x: 1, y: 2 }
 
-// Runs the Assert() function.
+// Clean
 
-const E = Value.Parse(['Assert'], Type.String(), 12345)
+const C = Value.Parse(T, { x: 1, y: 2, z: 3 })                // const C = { x: 1, y: 2 }
 
-// Runs the Convert() function followed by the Assert() function.
+// Assert
 
-const S = Value.Parse(['Convert', 'Assert'], Type.String(), 12345)
+const D = Value.Parse(T, undefined)                           // throws AssertError
 ```
 
 <a name='values-equal'></a>
@@ -1207,7 +1267,7 @@ const R = Value.Equal(                               // const R = true
 
 ### Hash
 
-Use the Hash function to create a [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) non-cryptographic hash of a value.
+Use the Hash function to create a [FNV1A-64](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) non cryptographic hash of a value.
 
 ```typescript
 const A = Value.Hash({ x: 1, y: 2, z: 3 })           // const A = 2910466848807138541n
@@ -1305,114 +1365,6 @@ ValuePointer.Set(A, '/y', 1)                         // A' = { x: 1, y: 1, z: 0 
 ValuePointer.Set(A, '/z', 1)                         // A' = { x: 1, y: 1, z: 1 }
 ```
 
-
-
-<a name='syntax'></a>
-
-## Syntax Types
-
-TypeBox provides experimental support for parsing TypeScript annotation syntax into TypeBox types.
-
-This feature is provided via optional import.
-
-```typescript
-import { Syntax } from '@sinclair/typebox/syntax'
-```
-
-<a name='syntax-create'></a>
-
-### Create
-
-Use the Syntax function to create TypeBox types from TypeScript syntax ([Example](https://www.typescriptlang.org/play/?moduleResolution=99&module=199&ts=5.8.0-beta#code/JYWwDg9gTgLgBAbzgZQJ4DsYEMAecC+cAZlBCHAOQACAzsOgMYA2WwUA9DKmAKYBGEHOxoZsOCgChQkWIhTYYwBgWKly1OoxZtO3foMkSGEdDXgAVOAF4Uo3AAoABkhwAuOOgCuIPjygAaOFR3Lx8-AkcASjgY2Jj2djhjUwt3cwB5PgArHgYYAB4ECTiS0rLyisrYhNi3OHMAOW9fAOKq9o7OuBqY4PqmsKg2rpHR+MT8AD4JCS5eeut5LEUGfLmeCCJ6ybHKmvWFmyLdk86euDrQlv9h07uy876rv1v7t-GCIA))
-
-```typescript
-const T = Syntax(`{ x: number, y: number }`)        // const T: TObject<{
-                                                    //   x: TNumber,
-                                                    //   y: TNumber
-                                                    // }>
-
-type T = Static<typeof T>                            // type T = {
-                                                     //   x: number,
-                                                     //   y: number
-                                                     // }
-```
-
-<a name="syntax-parameters"></a>
-
-### Parameters
-
-Syntax types can be parameterized to receive exterior types ([Example](https://www.typescriptlang.org/play/?moduleResolution=99&module=199&ts=5.8.0-beta#code/JYWwDg9gTgLgBAbzgZQJ4DsYEMAecC+cAZlBCHAOQACAzsOgMYA2WwUA9DKmAKYBGEHOxoZsOCgCgJDCOhrwAKnAC8KUbgAUAAyQ4AXHHQBXEHx5QANHFQHjp8wS0BKOK7ev27ODLmKDCgHk+ACseBhgAHgQJd1i4+ITEpLdPN304BQA5EzNLGOSCwqK4VNcbDOz7KHzi2rqPL3wAPikfeRQVNUxNJCV8Ky0ABSxYYCwmCIUm52LUtvhkfyDQ8Kia+o2C0rh0wLAYYFlxycrcpot1zav47fK9g6OJrJzzFuv3m8amoA))
-
-```typescript
-const T = Syntax(`{ x: number, y: number }`)        // const T: TObject<{
-                                                    //   x: TNumber,
-                                                    //   y: TNumber
-                                                    // }>
-
-const S = Syntax({ T }, `Partial<T>`)               // const S: TObject<{
-                                                    //   x: TOptional<TNumber>,
-                                                    //   y: TOptional<TNumber>
-                                                    // }>
-```
-
-
-
-<a name="syntax-generics"></a>
-
-### Generics
-
-Syntax types support generic parameters in the following way ([Example](https://www.typescriptlang.org/play/?moduleResolution=99&module=199&ts=5.8.0-beta#code/JYWwDg9gTgLgBAbzgZQJ4DsYEMAecC+cAZlBCHAOQACAzsOgMYA2WwUA9DKmAKYBGEHOxoZsOCgChQkWIhTYYwBgWKly1OoxZtO3foMkSGEdDXgA1HgxjQ4AXhSjcACgAGAHgAaAGjgBNXwAtAD45CTg4HAAuOB84cLhUGID4iIAvGMD4-FcASgkjEzM4ACEsOhpLa2gae0dMFyQqmygCX1cEBOi4Zuh3AEZfAAZh4O8EpJ6rFvcRuEG4IbGEjKnqqFnh337lnPyJLl5S8uBK6Zq65AUld0OeCCJjit6oGlCIiPZ2ODun05fag5Oh8QaCweCIZCoV8Pt0kN0FpM5qshm0ElCMZisSCYRFJvCYnNJgsUWjseSKeDcXBVgTFr4kb5Vv0COjKezsTD8EA))
-
-```typescript
-const Vector = Syntax(`<X, Y, Z> { 
-  x: X, 
-  y: Y, 
-  z: Z 
-}`)
-
-const BasisVectors = Syntax({ Vector }, `{
-  x: Vector<1, 0, 0>,
-  y: Vector<0, 1, 0>,
-  z: Vector<0, 0, 1>,
-}`)
-
-type BasisVectors = Static<typeof BasisVectors>     // type BasisVectors = {
-                                                    //   x: { x: 1, y: 0, z: 0 },
-                                                    //   y: { x: 0, y: 1, z: 0 },
-                                                    //   z: { x: 0, y: 0, z: 1 }
-                                                    // }
-```
-
-<a name='syntax-options'></a>
-
-### Options
-
-Options can be passed via the last parameter.
-
-```typescript
-const T = Syntax(`number`, { minimum: 42 })       // const T = {
-                                                  //   type: 'number',
-                                                  //   minimum: 42
-                                                  // }
-```
-
-<a name='syntax-no-infer'></a>
-
-### NoInfer
-
-Syntax parsing is an expensive type level operation and can impact on language service performance. Use the NoInfer function parse syntax at runtime only.
-
-```typescript
-import { NoInfer } from '@sinclair/typebox/syntax'
-
-const T = NoInfer(`number | string`)                // const T: TSchema = {
-                                                    //   anyOf: [
-                                                    //     { type: 'number' },
-                                                    //     { type: 'string' }
-                                                    //   ]
-                                                    // }
-```
-
 <a name='typeregistry'></a>
 
 ## TypeRegistry
@@ -1459,7 +1411,7 @@ const B = Value.Check(T, 'bar')                      // const B = false
 
 ## TypeCheck
 
-TypeBox types target Json Schema Draft 7 and are compatible with any validator that supports this specification. TypeBox also provides a built-in type checking compiler designed specifically for TypeBox types that offers high performance compilation and value checking.
+TypeBox types target Json Schema Draft 7 and are compatible with any validator that supports this specification. TypeBox also provides a built in type checking compiler designed specifically for TypeBox types that offers high performance compilation and value checking.
 
 The following sections detail using Ajv and the TypeBox compiler infrastructure.
 
@@ -1572,44 +1524,6 @@ const C = TypeCompiler.Code(Type.String())           // const C = `return functi
                                                      //     (typeof value === 'string')
                                                      //   )
                                                      // }`
-```
-
-<a name='typemap'></a>
-
-## TypeMap
-
-TypeBox offers an external package for bidirectional mapping between TypeBox, Valibot, and Zod type libraries. It also includes syntax parsing support for Valibot and Zod and supports the Standard Schema specification. For more details on TypeMap, refer to the project repository.
-
-[TypeMap Repository](https://github.com/sinclairzx81/typemap)
-
-<a name='typemap-usage'></a>
-
-### Usage
-
-TypeMap needs to be installed separately
-
-```bash
-$ npm install @sinclair/typemap
-```
-
-Once installed it offers advanced structural remapping between various runtime type libraries ([Example](https://www.typescriptlang.org/play/?moduleResolution=99&module=199&ts=5.8.0-beta#code/JYWwDg9gTgLgBAbzgFQJ5gKYCEIA8A0cAyqgHYwCGBcAWhACZwC+cAZlBCHAOQACAzsFIBjADYVgUAPQx0GEBTDcAUMuERS-eMjgBeFHJy4AFAAMkuAFxxSAVxAAjDFEKprdx88IAvd-adQzKYAlHBwUlJw6pra1sgA8g4AVhjCMAA8CMphObl5+QWFRcW5ETlWKABy-s4A3NkljU3NBWVhblU1UPUtvX3FbXC+nZ7dDf0TE2VMAHyq0VrEesRklCbIoS1lC-BE1twWfqOuRwE+p87MKmoaiwBKy3T0xkTBAHRgFFD8GMZ2oqJNnltrd4HdrFlJltImEKh4Aj0oU1Bh14XVxkiBjChhcxpjGtMwkA))
-
-```typescript
-import { TypeBox, Syntax, Zod } from '@sinclair/typemap'
-
-const T = TypeBox(`{ x: number, y: number, z: number }`)  // const T: TObject<{
-                                                          //   x: TNumber;
-                                                          //   y: TNumber;
-                                                          //   z: TNumber;
-                                                          // }>
-
-const S = Syntax(T)                // const S: '{ x: number, y: number, z: number }'
-
-const R = Zod(S).parse(null)       // const R: {
-                                   //   x: number;
-                                   //   y: number;
-                                   //   z: number;
-                                   // }                    
 ```
 
 <a name='typesystem'></a>
@@ -1730,20 +1644,17 @@ The following is a list of community packages that offer general tooling, extend
 | [fastify-type-provider-typebox](https://github.com/fastify/fastify-type-provider-typebox) | Fastify TypeBox integration with the Fastify Type Provider |
 | [feathersjs](https://github.com/feathersjs/feathers) | The API and real-time application framework |
 | [fetch-typebox](https://github.com/erfanium/fetch-typebox) | Drop-in replacement for fetch that brings easy integration with TypeBox |
-| [@lonli-lokli/fetcher-typebox](https://github.com/Lonli-Lokli/fetcher-ts/tree/master/packages/fetcher-typebox) | A strongly-typed fetch wrapper for TypeScript applications with optional runtime validation using TypeBox |
 | [h3-typebox](https://github.com/kevinmarrec/h3-typebox) | Schema validation utilities for h3 using TypeBox & Ajv |
 | [http-wizard](https://github.com/flodlc/http-wizard) | Type safe http client library for Fastify |
 | [json2typebox](https://github.com/hacxy/json2typebox) | Creating TypeBox code from Json Data |
 | [nominal-typebox](https://github.com/Coder-Spirit/nominal/tree/main/%40coderspirit/nominal-typebox) | Allows devs to integrate nominal types into TypeBox schemas |
 | [openapi-box](https://github.com/geut/openapi-box) | Generate TypeBox types from OpenApi IDL + Http client library |
-| [prismabox](https://github.com/m1212e/prismabox) | Converts a prisma.schema to TypeBox schema matching the database models |
+| [prismabox](https://github.com/m1212e/prismabox) | Converts a prisma.schema to typebox schema matching the database models |
 | [schema2typebox](https://github.com/xddq/schema2typebox)  | Creating TypeBox code from Json Schemas |
 | [sveltekit-superforms](https://github.com/ciscoheat/sveltekit-superforms)  | A comprehensive SvelteKit form library for server and client validation |
 | [ts2typebox](https://github.com/xddq/ts2typebox) | Creating TypeBox code from Typescript types |
-| [typebox-cli](https://github.com/gsuess/typebox-cli) | Generate Schema with TypeBox from the CLI |
 | [typebox-form-parser](https://github.com/jtlapp/typebox-form-parser) | Parses form and query data based on TypeBox schemas |
-| [typebox-schema-faker](https://github.com/iam-medvedev/typebox-schema-faker) | Generate fake data from TypeBox schemas for testing, prototyping and development |
-
+| [typebox-validators](https://github.com/jtlapp/typebox-validators) | Advanced validators supporting discriminated and heterogeneous unions |
 
 <a name='benchmark'></a>
 
@@ -1849,12 +1760,12 @@ The following table lists esbuild compiled and minified sizes for each TypeBox m
 ┌──────────────────────┬────────────┬────────────┬─────────────┐
 │ (index)              │ Compiled   │ Minified   │ Compression │
 ├──────────────────────┼────────────┼────────────┼─────────────┤
-│ typebox/compiler     │ '122.4 kb' │ ' 53.4 kb' │ '2.29 x'    │
-│ typebox/errors       │ ' 67.6 kb' │ ' 29.6 kb' │ '2.28 x'    │
-│ typebox/syntax       │ '132.9 kb' │ ' 54.2 kb' │ '2.45 x'    │
+│ typebox/compiler     │ '119.8 kb' │ ' 52.6 kb' │ '2.28 x'    │
+│ typebox/errors       │ ' 74.4 kb' │ ' 33.1 kb' │ '2.25 x'    │
+│ typebox/parse        │ '115.3 kb' │ ' 48.3 kb' │ '2.39 x'    │
 │ typebox/system       │ '  7.4 kb' │ '  3.2 kb' │ '2.33 x'    │
-│ typebox/value        │ '150.1 kb' │ ' 62.2 kb' │ '2.41 x'    │
-│ typebox              │ '106.8 kb' │ ' 43.2 kb' │ '2.47 x'    │
+│ typebox/value        │ '157.2 kb' │ ' 66.1 kb' │ '2.38 x'    │
+│ typebox              │ '127.3 kb' │ ' 53.3 kb' │ '2.39 x'    │
 └──────────────────────┴────────────┴────────────┴─────────────┘
 ```
 

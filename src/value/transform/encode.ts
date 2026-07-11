@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,6 @@ import { Check } from '../check/index'
 
 import type { TSchema } from '../../type/schema/index'
 import type { TArray } from '../../type/array/index'
-import type { TImport } from '../../type/module/index'
 import type { TIntersect } from '../../type/intersect/index'
 import type { TNot } from '../../type/not/index'
 import type { TObject } from '../../type/object/index'
@@ -51,9 +50,9 @@ import type { TUnion } from '../../type/union/index'
 // ------------------------------------------------------------------
 import { HasPropertyKey, IsObject, IsArray, IsValueType, IsUndefined as IsUndefinedValue } from '../guard/index'
 // ------------------------------------------------------------------
-// KindGuard
+// TypeGuard
 // ------------------------------------------------------------------
-import { IsTransform, IsSchema, IsUndefined } from '../../type/guard/kind'
+import { IsTransform, IsSchema, IsUndefined } from '../../type/guard/type'
 // ------------------------------------------------------------------
 // Errors
 // ------------------------------------------------------------------
@@ -95,13 +94,6 @@ function FromArray(schema: TArray, references: TSchema[], path: string, value: a
   return IsArray(defaulted)
     ? defaulted.map((value: any, index) => Visit(schema.items, references, `${path}/${index}`, value))
     : defaulted
-}
-// prettier-ignore
-function FromImport(schema: TImport, references: TSchema[], path: string, value: unknown): unknown {
-  const additional = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  const result = Default(schema, path, value)
-  return Visit(target, [...references, ...additional], path, result)
 }
 // prettier-ignore
 function FromIntersect(schema: TIntersect, references: TSchema[], path: string, value: any) {
@@ -218,8 +210,6 @@ function Visit(schema: TSchema, references: TSchema[], path: string, value: any)
   switch (schema[Kind]) {
     case 'Array':
       return FromArray(schema_, references_, path, value)
-    case 'Import':
-      return FromImport(schema_, references_, path, value)
     case 'Intersect':
       return FromIntersect(schema_, references_, path, value)
     case 'Not':

@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2024 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,63 +41,63 @@ import { IsTemplateLiteral, IsUnion, IsLiteral, IsNumber, IsInteger } from '../g
 // FromTemplateLiteral
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromTemplateLiteral<TemplateLiteral extends TTemplateLiteral, Keys extends string[] = TTemplateLiteralGenerate<TemplateLiteral>> = (Keys)
+type TFromTemplateLiteral<T extends TTemplateLiteral, R extends string[] = TTemplateLiteralGenerate<T>> = (R)
 // prettier-ignore
-function FromTemplateLiteral<TemplateLiteral extends TTemplateLiteral>(templateLiteral: TemplateLiteral): TFromTemplateLiteral<TemplateLiteral> {
-  const keys = TemplateLiteralGenerate(templateLiteral) as string[]
-  return keys.map(key => key.toString()) as never
+function FromTemplateLiteral<T extends TTemplateLiteral>(T: T): TFromTemplateLiteral<T> {
+  const R = TemplateLiteralGenerate(T) as string[]
+  return R.map(S => S.toString()) as never
 }
 // ------------------------------------------------------------------
 // FromUnion
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromUnion<Types extends TSchema[], Result extends string[] = []> = (
-  Types extends [infer Left extends TSchema, ...infer Right extends TSchema[]] 
-    ? TFromUnion<Right, [...Result, ...TIndexPropertyKeys<Left>]>
-    : Result
+type TFromUnion<T extends TSchema[], Acc extends string[] = []> = (
+  T extends [infer L extends TSchema, ...infer R extends TSchema[]] 
+    ? TFromUnion<R, [...Acc, ...TIndexPropertyKeys<L>]>
+    : Acc
 )
 // prettier-ignore
-function FromUnion<Types extends TSchema[]>(types: Types): TFromUnion<Types> {
-  const result = [] as string[]
-  for(const type of types) result.push(...IndexPropertyKeys(type))
-  return result as never
+function FromUnion<T extends TSchema[]>(T: T): TFromUnion<T> {
+  const Acc = [] as string[]
+  for(const L of T) Acc.push(...IndexPropertyKeys(L))
+  return Acc as never
 }
 // ------------------------------------------------------------------
 // FromLiteral
 // ------------------------------------------------------------------
 // prettier-ignore
-type TFromLiteral<LiteralValue extends TLiteralValue> = (
-  LiteralValue extends PropertyKey 
-    ? [`${LiteralValue}`] 
+type TFromLiteral<T extends TLiteralValue> = (
+  T extends PropertyKey 
+    ? [`${T}`] 
     : []
 )
 // prettier-ignore
-function FromLiteral<LiteralValue extends TLiteralValue>(literalValue: LiteralValue): TFromLiteral<LiteralValue> {
+function FromLiteral<T extends TLiteralValue>(T: T): TFromLiteral<T> {
   return (
-    [(literalValue as string).toString()] // TS 5.4 observes TLiteralValue as not having a toString()
+    [(T as string).toString()] // TS 5.4 observes TLiteralValue as not having a toString()
   ) as never
 }
 // ------------------------------------------------------------------
-// IndexPropertyKeys
+// IndexedKeyResolve
 // ------------------------------------------------------------------
 // prettier-ignore
-export type TIndexPropertyKeys<Type extends TSchema> = (
-  Type extends TTemplateLiteral  ? TFromTemplateLiteral<Type> :
-  Type extends TUnion<infer Types extends TSchema[]> ? TFromUnion<Types> :
-  Type extends TLiteral<infer Value extends TLiteralValue> ? TFromLiteral<Value> :
-  Type extends TNumber ? ['[number]'] :  
-  Type extends TInteger ? ['[number]'] :
+export type TIndexPropertyKeys<T extends TSchema> = (
+  T extends TTemplateLiteral  ? TFromTemplateLiteral<T> :
+  T extends TUnion<infer S>   ? TFromUnion<S> :
+  T extends TLiteral<infer S> ? TFromLiteral<S> :
+  T extends TNumber           ? ['[number]'] :  
+  T extends TInteger          ? ['[number]'] :
   []
 )
 /** Returns a tuple of PropertyKeys derived from the given TSchema */
 // prettier-ignore
-export function IndexPropertyKeys<Type extends TSchema>(type: Type): TIndexPropertyKeys<Type> {
+export function IndexPropertyKeys<T extends TSchema>(T: T): TIndexPropertyKeys<T> {
   return [...new Set<string>((
-    IsTemplateLiteral(type) ? FromTemplateLiteral(type) :
-    IsUnion(type) ? FromUnion(type.anyOf) :
-    IsLiteral(type) ? FromLiteral(type.const) :
-    IsNumber(type) ? ['[number]'] : 
-    IsInteger(type) ? ['[number]'] :
+    IsTemplateLiteral(T) ? FromTemplateLiteral(T) :
+    IsUnion(T) ? FromUnion(T.anyOf) :
+    IsLiteral(T) ? FromLiteral(T.const) :
+    IsNumber(T) ? ['[number]'] : 
+    IsInteger(T) ? ['[number]'] :
     []
   ))] as never
 }
