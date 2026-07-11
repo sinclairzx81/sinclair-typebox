@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sinclairzx81/typebox"
+    "url": "https://github.com/sinclairzx81/sinclair-typebox"
   },
   "scripts": {
     "test:typescript": "hammer task test_typescript",
