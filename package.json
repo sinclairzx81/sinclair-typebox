@@ -60,5 +60,8 @@
     "mocha": "^9.2.2",
     "prettier": "^2.7.1",
     "typescript": "^5.2.2"
+  },
+  "allowScripts": {
+    "esbuild@0.15.7": true
   }
 }
