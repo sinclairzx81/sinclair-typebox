@@ -134,6 +134,18 @@ namespace Character {
   }
 }
 // ------------------------------------------------------------------
+// StringUtil
+// ------------------------------------------------------------------
+export namespace StringUtil {
+  /**
+   * Unquoted string values are embedded into single-quote string. This
+   * function ensures that embedded string cannot be escaped.
+   */
+  export function EscapeSingleQuote(value: string): string {
+    return JSON.stringify(value).slice(1, -1).replace(/'/g, "\\'")
+  }
+}
+// ------------------------------------------------------------------
 // MemberExpression
 // ------------------------------------------------------------------
 namespace MemberExpression {
@@ -151,7 +163,7 @@ namespace MemberExpression {
     return true
   }
   function EscapeHyphen(key: string) {
-    return key.replace(/'/g, "\\'")
+    return StringUtil.EscapeSingleQuote(key)
   }
   export function Encode(object: string, key: string) {
     return IsAccessor(key) ? `${object}.${key}` : `${object}['${EscapeHyphen(key)}']`
@@ -179,7 +191,7 @@ namespace Identifier {
 // ------------------------------------------------------------------
 namespace LiteralString {
   export function Escape(content: string) {
-    return content.replace(/'/g, "\\'")
+    return StringUtil.EscapeSingleQuote(content)
   }
 }
 // ------------------------------------------------------------------
