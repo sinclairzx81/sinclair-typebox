@@ -1,4 +1,4 @@
-import { Type, ReadonlyKind, OptionalKind } from '@sinclair/typebox'
+import { Type, Readonly, Optional } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 import { strictEqual } from 'assert'
 
@@ -26,10 +26,10 @@ describe('compiler/Required', () => {
       w: Type.Number(),
     })
     const T = Type.Required(A)
-    strictEqual(T.properties.x[ReadonlyKind], 'Readonly')
-    strictEqual(T.properties.y[ReadonlyKind], 'Readonly')
-    strictEqual(T.properties.z[OptionalKind], undefined)
-    strictEqual(T.properties.w[OptionalKind], undefined)
+    strictEqual(T.properties.x[Readonly], 'Readonly')
+    strictEqual(T.properties.y[Readonly], 'Readonly')
+    strictEqual(T.properties.z[Optional], undefined)
+    strictEqual(T.properties.w[Optional], undefined)
   })
   it('Should inherit options from the source object', () => {
     const A = Type.Object(
@@ -44,7 +44,6 @@ describe('compiler/Required', () => {
     strictEqual(A.additionalPropeties, false)
     strictEqual(T.additionalPropeties, false)
   })
-
   // it('Should construct new object when targetting reference', () => {
   //   const T = Type.Object({ a: Type.String(), b: Type.String() }, { $id: 'T' })
   //   const R = Type.Ref(T)

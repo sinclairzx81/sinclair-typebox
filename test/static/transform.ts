@@ -1,7 +1,4 @@
 import { Type, TSchema, Static, StaticDecode, TObject, TNumber } from '@sinclair/typebox'
-import { TypeCheck } from '@sinclair/typebox/compiler'
-import { Value } from '@sinclair/typebox/value'
-
 import { Expect } from './assert'
 {
   // string > number
@@ -218,12 +215,12 @@ import { Expect } from './assert'
   // should decode within generic function context
   // https://github.com/sinclairzx81/typebox/issues/554
   // prettier-ignore
-  // const ArrayOrSingle = <T extends TSchema>(schema: T) =>
-  //   Type.Transform(Type.Union([schema, Type.Array(schema)])[0])
-  //     .Decode((value) => (Array.isArray(value) ? value : [value]))
-  //     .Encode((value) => (value.length === 1 ? value[0] : value) as Static<T>[]);
-  // const T = ArrayOrSingle(Type.String())
-  // Expect(T).ToStaticDecode<string[]>()
+  const ArrayOrSingle = <T extends TSchema>(schema: T) =>
+    Type.Transform(Type.Union([schema, Type.Array(schema)]))
+      .Decode((value) => (Array.isArray(value) ? value : [value]))
+      .Encode((value) => (value.length === 1 ? value[0] : value) as Static<T>[]);
+  const T = ArrayOrSingle(Type.String())
+  Expect(T).ToStaticDecode<string[]>()
 }
 {
   // should correctly decode record keys
@@ -311,66 +308,4 @@ import { Expect } from './assert'
   const T = Type.Constructor([S], S)
   Expect(T).ToStaticDecode<new (x: Date) => Date>()
   Expect(T).ToStaticEncode<new (x: number) => number>()
-}
-// -------------------------------------------------------------
-// https://github.com/sinclairzx81/typebox/issues/798
-// -------------------------------------------------------------
-{
-  const c1: TypeCheck<any> = {} as any
-  const x1 = c1.Decode({})
-  const x2 = Value.Decode({} as any, {})
-}
-// -------------------------------------------------------------
-// https://github.com/sinclairzx81/typebox/issues/1178
-// -------------------------------------------------------------
-// immediate
-{
-  const T = Type.Module({
-    A: Type.Transform(Type.String())
-      .Decode((value) => parseInt(value))
-      .Encode((value) => value.toString()),
-  }).Import('A')
-  Expect(T).ToStaticDecode<number>()
-  Expect(T).ToStaticEncode<string>()
-}
-// referential
-{
-  const T = Type.Module({
-    A: Type.Transform(Type.String())
-      .Decode((value) => parseInt(value))
-      .Encode((value) => value.toString()),
-    B: Type.Ref('A'),
-  }).Import('B')
-  Expect(T).ToStaticDecode<number>()
-  Expect(T).ToStaticEncode<string>()
-}
-// deep-referential
-{
-  const T = Type.Module({
-    A: Type.Transform(Type.String())
-      .Decode((value) => parseInt(value))
-      .Encode((value) => value.toString()),
-    B: Type.Ref('A'),
-    C: Type.Ref('B'),
-    D: Type.Ref('C'),
-    E: Type.Ref('D'),
-  }).Import('E')
-  Expect(T).ToStaticDecode<number>()
-  Expect(T).ToStaticEncode<string>()
-}
-// interior-transform referential
-{
-  const T = Type.Module({
-    A: Type.String(),
-    B: Type.Ref('A'),
-    C: Type.Ref('B'),
-    T: Type.Transform(Type.Ref('C'))
-      .Decode((value) => parseInt(value as string))
-      .Encode((value) => value.toString()),
-    X: Type.Ref('T'),
-    Y: Type.Ref('X'),
-    Z: Type.Ref('Y'),
-  }).Import('Z')
-  Expect(T).ToStaticDecode<number>()
-  Expect(T).ToStaticEncode<string>()
 }

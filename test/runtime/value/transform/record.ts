@@ -1,5 +1,6 @@
 import * as Encoder from './_encoder'
 import { Assert } from '../../assert'
+import { Value } from '@sinclair/typebox/value'
 import { Type } from '@sinclair/typebox'
 
 describe('value/transform/Record', () => {

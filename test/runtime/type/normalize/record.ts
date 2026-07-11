@@ -6,7 +6,7 @@ describe('type/normalize/Record', () => {
   it('Normalize 1', () => {
     const K = Type.Union([Type.Literal('A'), Type.Literal('B')])
     const T = Type.Record(K, Type.String())
-    const R = TypeGuard.IsObject(T)
+    const R = TypeGuard.TObject(T)
     Assert.IsTrue(R)
   })
 })
