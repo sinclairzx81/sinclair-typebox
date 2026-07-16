@@ -59,43 +59,33 @@ export class TypeCheck<T extends Types.TSchema> {
     return this.checkFunc(value)
   }
 }
-
-// -------------------------------------------------------------------
-// Property
-// -------------------------------------------------------------------
-
-export namespace Property {
-  function DollarSign(code: number) {
-    return code === 36
-  }
-  function Underscore(code: number) {
-    return code === 95
-  }
-  function Numeric(code: number) {
-    return code >= 48 && code <= 57
-  }
-  function Alpha(code: number) {
-    return (code >= 65 && code <= 90) || (code >= 97 && code <= 122)
-  }
-
-  export function Check(propertyName: string) {
-    if (propertyName.length === 0) return false
-    {
-      const code = propertyName.charCodeAt(0)
-      if (!(DollarSign(code) || Underscore(code) || Alpha(code))) {
-        return false
-      }
-    }
-    for (let i = 1; i < propertyName.length; i++) {
-      const code = propertyName.charCodeAt(i)
-      if (!(DollarSign(code) || Underscore(code) || Alpha(code) || Numeric(code))) {
-        return false
-      }
-    }
-    return true
-  }
+// ------------------------------------------------------------------
+// Guards
+// ------------------------------------------------------------------
+function IsNumber(value: unknown): value is number {
+  return value !== undefined && typeof value === 'number'
 }
-
+function IsBoolean(value: unknown): value is boolean {
+  return value !== undefined && typeof value === 'boolean'
+}
+function IsString(value: unknown): value is string {
+  return value !== undefined && typeof value === 'string'
+}
+// ------------------------------------------------------------------
+// StringConstant
+// ------------------------------------------------------------------
+function StringConstant(value: string): string {
+  if (!IsString(value)) throw Error('ConstantString: Not a String')
+  const canonical = JSON.stringify(value).slice(1, -1)
+  const escaped = canonical.replace(/'/g, "\\'")
+  return `'${escaped}'`
+}
+// ------------------------------------------------------------------
+// MemberExpression
+// ------------------------------------------------------------------
+function MemberExpression(value: string, key: string): string {
+  return `${value}[${StringConstant(key)}]`
+}
 // -------------------------------------------------------------------
 // TypeCompiler
 // -------------------------------------------------------------------
@@ -118,9 +108,9 @@ export namespace TypeCompiler {
 
   function* Array(schema: Types.TArray, value: string): IterableIterator<string> {
     const expression = CreateExpression(schema.items, 'value')
-    if (schema.minItems !== undefined) yield `(${value}.length >= ${schema.minItems})`
-    if (schema.maxItems !== undefined) yield `(${value}.length <= ${schema.maxItems})`
-    if (schema.uniqueItems !== undefined) yield `(new Set(${value}).size === ${value}.length)`
+    if (IsNumber(schema.minItems)) yield `(${value}.length >= ${schema.minItems})`
+    if (IsNumber(schema.maxItems)) yield `(${value}.length <= ${schema.maxItems})`
+    if (IsBoolean(schema.uniqueItems)) yield `(new Set(${value}).size === ${value}.length)`
     yield `(Array.isArray(${value}) && ${value}.every(value => ${expression}))`
   }
 
@@ -138,18 +128,20 @@ export namespace TypeCompiler {
 
   function* Integer(schema: Types.TNumeric, value: string): IterableIterator<string> {
     yield `(typeof ${value} === 'number' && Number.isInteger(${value}))`
-    if (schema.multipleOf !== undefined) yield `(${value} % ${schema.multipleOf} === 0)`
-    if (schema.exclusiveMinimum !== undefined) yield `(${value} > ${schema.exclusiveMinimum})`
-    if (schema.exclusiveMaximum !== undefined) yield `(${value} < ${schema.exclusiveMaximum})`
-    if (schema.minimum !== undefined) yield `(${value} >= ${schema.minimum})`
-    if (schema.maximum !== undefined) yield `(${value} <= ${schema.maximum})`
+    if (IsNumber(schema.multipleOf)) yield `(${value} % ${schema.multipleOf} === 0)`
+    if (IsNumber(schema.exclusiveMinimum)) yield `(${value} > ${schema.exclusiveMinimum})`
+    if (IsNumber(schema.exclusiveMaximum)) yield `(${value} < ${schema.exclusiveMaximum})`
+    if (IsNumber(schema.minimum)) yield `(${value} >= ${schema.minimum})`
+    if (IsNumber(schema.maximum)) yield `(${value} <= ${schema.maximum})`
   }
 
   function* Literal(schema: Types.TLiteral, value: string): IterableIterator<string> {
     if (typeof schema.const === 'number' || typeof schema.const === 'boolean') {
       yield `(${value} === ${schema.const})`
+    } else if (typeof schema.const === 'string') {
+      yield `(${value} === ${StringConstant(schema.const)})`
     } else {
-      yield `(${value} === '${schema.const}')`
+      throw Error('Invalid Literal Value')
     }
   }
 
@@ -163,17 +155,17 @@ export namespace TypeCompiler {
 
   function* Number(schema: Types.TNumeric, value: string): IterableIterator<string> {
     yield `(typeof ${value} === 'number')`
-    if (schema.multipleOf !== undefined) yield `(${value} % ${schema.multipleOf} === 0)`
-    if (schema.exclusiveMinimum !== undefined) yield `(${value} > ${schema.exclusiveMinimum})`
-    if (schema.exclusiveMaximum !== undefined) yield `(${value} < ${schema.exclusiveMaximum})`
-    if (schema.minimum !== undefined) yield `(${value} >= ${schema.minimum})`
-    if (schema.maximum !== undefined) yield `(${value} <= ${schema.maximum})`
+    if (IsNumber(schema.multipleOf)) yield `(${value} % ${schema.multipleOf} === 0)`
+    if (IsNumber(schema.exclusiveMinimum)) yield `(${value} > ${schema.exclusiveMinimum})`
+    if (IsNumber(schema.exclusiveMaximum)) yield `(${value} < ${schema.exclusiveMaximum})`
+    if (IsNumber(schema.minimum)) yield `(${value} >= ${schema.minimum})`
+    if (IsNumber(schema.maximum)) yield `(${value} <= ${schema.maximum})`
   }
 
   function* Object(schema: Types.TObject, value: string): IterableIterator<string> {
     yield `(typeof ${value} === 'object' && ${value} !== null && !Array.isArray(${value}))`
-    if (schema.minProperties !== undefined) yield `(Object.keys(${value}).length >= ${schema.minProperties})`
-    if (schema.maxProperties !== undefined) yield `(Object.keys(${value}).length <= ${schema.maxProperties})`
+    if (IsNumber(schema.minProperties)) yield `(Object.keys(${value}).length >= ${schema.minProperties})`
+    if (IsNumber(schema.maxProperties)) yield `(Object.keys(${value}).length <= ${schema.maxProperties})`
     const propertyKeys = globalThis.Object.keys(schema.properties)
     if (schema.additionalProperties === false) {
       // Optimization: If the property key length matches the required keys length
@@ -183,17 +175,17 @@ export namespace TypeCompiler {
       if (schema.required && schema.required.length === propertyKeys.length) {
         yield `(Object.keys(${value}).length === ${propertyKeys.length})`
       } else {
-        const keys = `[${propertyKeys.map((key) => `'${key}'`).join(', ')}]`
+        const keys = `[${propertyKeys.map((key) => `${StringConstant(key)}`).join(', ')}]`
         yield `(Object.keys(${value}).every(key => ${keys}.includes(key)))`
       }
     }
     if (TypeGuard.TSchema(schema.additionalProperties)) {
       const expression = CreateExpression(schema.additionalProperties, 'value[key]')
-      const keys = `[${propertyKeys.map((key) => `'${key}'`).join(', ')}]`
+      const keys = `[${propertyKeys.map((key) => `${StringConstant(key)}`).join(', ')}]`
       yield `(Object.keys(${value}).every(key => ${keys}.includes(key) || ${expression}))`
     }
     for (const propertyKey of propertyKeys) {
-      const memberExpression = Property.Check(propertyKey) ? `${value}.${propertyKey}` : `${value}['${propertyKey}']`
+      const memberExpression = MemberExpression(value, propertyKey)
       const propertySchema = schema.properties[propertyKey]
       if (schema.required && schema.required.includes(propertyKey)) {
         yield* Visit(propertySchema, memberExpression)
@@ -211,7 +203,7 @@ export namespace TypeCompiler {
   function* Record(schema: Types.TRecord<any, any>, value: string): IterableIterator<string> {
     yield `(typeof ${value} === 'object' && ${value} !== null && !Array.isArray(${value}))`
     const [keyPattern, valueSchema] = globalThis.Object.entries(schema.patternProperties)[0]
-    const local = PushLocal(`new RegExp(/${keyPattern}/)`)
+    const local = PushLocal(`${new RegExp(keyPattern)}`)
     yield `(Object.keys(${value}).every(key => ${local}.test(key)))`
     const expression = CreateExpression(valueSchema, 'value')
     yield `(Object.values(${value}).every(value => ${expression}))`
@@ -234,24 +226,25 @@ export namespace TypeCompiler {
 
   function* String(schema: Types.TString, value: string): IterableIterator<string> {
     yield `(typeof ${value} === 'string')`
-    if (schema.minLength !== undefined) {
+    if (IsNumber(schema.minLength)) {
       yield `(${value}.length >= ${schema.minLength})`
     }
-    if (schema.maxLength !== undefined) {
+    if (IsNumber(schema.maxLength)) {
       yield `(${value}.length <= ${schema.maxLength})`
     }
-    if (schema.pattern !== undefined) {
-      const local = PushLocal(`new RegExp(/${schema.pattern}/);`)
+    if (IsString(schema.pattern)) {
+      const local = PushLocal(`${new RegExp(schema.pattern)}`)
       yield `(${local}.test(${value}))`
     }
     if (schema.format !== undefined) {
-      yield `(format('${schema.format}', ${value}))`
+      yield `(format(${StringConstant(schema.format)}, ${value}))`
     }
   }
 
   function* Tuple(schema: Types.TTuple<any[]>, value: string): IterableIterator<string> {
     yield `(Array.isArray(${value}))`
     if (schema.items === undefined) return yield `(${value}.length === 0)`
+    if (!IsNumber(schema.maxItems)) throw Error('MaxItems: Not a Number')
     yield `(${value}.length === ${schema.maxItems})`
     for (let i = 0; i < schema.items.length; i++) {
       const expression = CreateExpression(schema.items[i], `${value}[${i}]`)
@@ -270,8 +263,8 @@ export namespace TypeCompiler {
 
   function* Uint8Array(schema: Types.TUint8Array, value: string): IterableIterator<string> {
     yield `(${value} instanceof Uint8Array)`
-    if (schema.maxByteLength) yield `(${value}.length <= ${schema.maxByteLength})`
-    if (schema.minByteLength) yield `(${value}.length >= ${schema.minByteLength})`
+    if (IsNumber(schema.maxByteLength)) yield `(${value}.length <= ${schema.maxByteLength})`
+    if (IsNumber(schema.minByteLength)) yield `(${value}.length >= ${schema.minByteLength})`
   }
 
   function* Unknown(schema: Types.TUnknown, value: string): IterableIterator<string> {
@@ -372,6 +365,7 @@ export namespace TypeCompiler {
   }
 
   function CreateFunctionName($id: string) {
+    if (!/^[a-zA-Z0-9_-]+$/.test($id)) throw Error(`Invalid $id: '${$id}'`)
     return `check_${$id.replace(/-/g, '_')}`
   }
 
