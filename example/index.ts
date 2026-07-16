@@ -1,8 +1,12 @@
+import { Codegen } from '@sinclair/typebox/codegen'
 import { TypeSystem } from '@sinclair/typebox/system'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
+import { TypeGuard } from '@sinclair/typebox/guard'
+import { Conditional } from '@sinclair/typebox/conditional'
+import { Format } from '@sinclair/typebox/format'
+import { Custom } from '@sinclair/typebox/custom'
 import { Value, ValuePointer } from '@sinclair/typebox/value'
-import { Type, TypeGuard, Kind, Static, TSchema } from '@sinclair/typebox'
-import { Syntax } from '@sinclair/typebox/syntax'
+import { Type, Kind, Static, TSchema } from '@sinclair/typebox'
 
 // -----------------------------------------------------------
 // Create: Type
@@ -17,14 +21,6 @@ const T = Type.Object({
 type T = Static<typeof T>
 
 console.log(T)
-
-// -----------------------------------------------------------
-// Syntax: Type
-// -----------------------------------------------------------
-
-const S = Syntax({ T }, `{ x: T, y: T, z: T }`)
-
-type S = Static<typeof S>
 
 // -----------------------------------------------------------
 // Create: Value

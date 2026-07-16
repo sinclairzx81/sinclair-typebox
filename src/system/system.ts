@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2023 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,41 +26,40 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { TypeRegistry, FormatRegistry } from '../type/registry/index'
-import { Unsafe, type TUnsafe } from '../type/unsafe/index'
-import { Kind } from '../type/symbols/index'
-import { TypeBoxError } from '../type/error/index'
+import { Kind, Type } from '../typebox'
+import { Custom } from '../custom/index'
+import { Format } from '../format/index'
 
-// ------------------------------------------------------------------
-// Errors
-// ------------------------------------------------------------------
-export class TypeSystemDuplicateTypeKind extends TypeBoxError {
+export class TypeSystemDuplicateTypeKind extends Error {
   constructor(kind: string) {
-    super(`Duplicate type kind '${kind}' detected`)
+    super(`Duplicate kind '${kind}' detected`)
   }
 }
-export class TypeSystemDuplicateFormat extends TypeBoxError {
+export class TypeSystemDuplicateFormat extends Error {
   constructor(kind: string) {
-    super(`Duplicate string format '${kind}' detected`)
+    super(`Duplicate format '${kind}' detected`)
   }
 }
-// ------------------------------------------------------------------
-// TypeSystem
-// ------------------------------------------------------------------
-export type TypeFactoryFunction<Type, Options = Record<PropertyKey, unknown>> = (options?: Partial<Options>) => TUnsafe<Type>
 
 /** Creates user defined types and formats and provides overrides for value checking behaviours */
 export namespace TypeSystem {
-  /** Creates a new type */
-  export function Type<Type, Options = Record<PropertyKey, unknown>>(kind: string, check: (options: Options, value: unknown) => boolean): TypeFactoryFunction<Type, Options> {
-    if (TypeRegistry.Has(kind)) throw new TypeSystemDuplicateTypeKind(kind)
-    TypeRegistry.Set(kind, check)
-    return (options: Partial<Options> = {}) => Unsafe<Type>({ ...options, [Kind]: kind })
+  /** Sets whether arrays should be treated as kinds of objects. The default is `false` */
+  export let AllowArrayObjects: boolean = false
+
+  /** Sets whether numeric checks should consider NaN a valid number type. The default is `false` */
+  export let AllowNaN: boolean = false
+
+  /** Creates a custom type */
+  export function CreateType<Type, Options = object>(kind: string, callback: (options: Options, value: unknown) => boolean) {
+    if (Custom.Has(kind)) throw new TypeSystemDuplicateTypeKind(kind)
+    Custom.Set(kind, callback)
+    return (options: Partial<Options> = {}) => Type.Unsafe<Type>({ ...options, [Kind]: kind })
   }
-  /** Creates a new string format */
-  export function Format<F extends string>(format: F, check: (value: string) => boolean): F {
-    if (FormatRegistry.Has(format)) throw new TypeSystemDuplicateFormat(format)
-    FormatRegistry.Set(format, check)
-    return format
+
+  /** Creates a custom string format */
+  export function CreateFormat(format: string, callback: (value: string) => boolean) {
+    if (Format.Has(format)) throw new TypeSystemDuplicateFormat(format)
+    Format.Set(format, callback)
+    return callback
   }
 }

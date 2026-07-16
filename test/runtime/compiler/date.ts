@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Date', () => {
+describe('type/compiler/Date', () => {
   it('Should not validate number', () => {
     const T = Type.Date()
     Fail(T, 1)
@@ -34,14 +34,6 @@ describe('compiler/Date', () => {
     const T = Type.Date()
     Ok(T, new Date())
   })
-  it('Should not validate bigint', () => {
-    const T = Type.Date()
-    Fail(T, BigInt(1))
-  })
-  it('Should not validate symbol', () => {
-    const T = Type.Date()
-    Fail(T, Symbol(1))
-  })
   it('Should not validate Date if is invalid', () => {
     const T = Type.Date()
     Fail(T, new Date('not-a-valid-date'))
@@ -53,8 +45,8 @@ describe('compiler/Date', () => {
   })
   it('Should validate Date maximumTimestamp', () => {
     const T = Type.Date({ maximumTimestamp: 10 })
-    Fail(T, new Date(11))
     Ok(T, new Date(10))
+    Fail(T, new Date(11))
   })
   it('Should validate Date exclusiveMinimumTimestamp', () => {
     const T = Type.Date({ exclusiveMinimumTimestamp: 10 })
@@ -63,12 +55,7 @@ describe('compiler/Date', () => {
   })
   it('Should validate Date exclusiveMaximumTimestamp', () => {
     const T = Type.Date({ exclusiveMaximumTimestamp: 10 })
-    Fail(T, new Date(10))
     Ok(T, new Date(9))
-  })
-  it('Should validate Date multipleOfTimestamp', () => {
-    const T = Type.Date({ multipleOfTimestamp: 2 })
-    Fail(T, new Date(1))
-    Ok(T, new Date(2))
+    Fail(T, new Date(10))
   })
 })

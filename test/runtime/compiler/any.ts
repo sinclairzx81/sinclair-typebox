@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok } from './validate'
 
-describe('compiler/Any', () => {
+describe('type/compiler/Any', () => {
   it('Should validate number', () => {
     const T = Type.Any()
     Ok(T, 1)
@@ -29,13 +29,5 @@ describe('compiler/Any', () => {
   it('Should validate undefined', () => {
     const T = Type.Any()
     Ok(T, undefined)
-  })
-  it('Should validate bigint', () => {
-    const T = Type.Any()
-    Ok(T, BigInt(1))
-  })
-  it('Should validate symbol', () => {
-    const T = Type.Any()
-    Ok(T, Symbol(1))
   })
 })

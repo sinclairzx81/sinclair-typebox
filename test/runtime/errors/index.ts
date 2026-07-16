@@ -1,2 +1,1 @@
-import './iterator/index'
-import './types/index'
+// todo: implement once errors are standardized

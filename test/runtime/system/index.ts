@@ -1,2 +1,4 @@
-import './policy/index'
-import './type/index'
+import './AllowArrayObjects'
+import './AllowNaN'
+import './CreateFormat'
+import './CreateType'
