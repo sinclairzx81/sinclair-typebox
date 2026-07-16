@@ -293,7 +293,7 @@ export namespace TypeCompiler {
     if (IsNumber(schema.minProperties)) yield `Object.getOwnPropertyNames(${value}).length >= ${schema.minProperties}`
     if (IsNumber(schema.maxProperties)) yield `Object.getOwnPropertyNames(${value}).length <= ${schema.maxProperties}`
     const [patternKey, patternSchema] = globalThis.Object.entries(schema.patternProperties)[0]
-    const local = PushLocal(`new RegExp(/${patternKey}/)`)
+    const local = PushLocal(`${new RegExp(patternKey)}`)
     const check1 = CreateExpression(patternSchema, references, 'value')
     const check2 = Types.TypeGuard.TSchema(schema.additionalProperties) ? CreateExpression(schema.additionalProperties, references, value) : schema.additionalProperties === false ? 'false' : 'true'
     const expression = `(${local}.test(key) ? ${check1} : ${check2})`
@@ -336,6 +336,7 @@ export namespace TypeCompiler {
   function* Tuple(schema: Types.TTuple<any[]>, references: Types.TSchema[], value: string): IterableIterator<string> {
     yield `Array.isArray(${value})`
     if (schema.items === undefined) return yield `${value}.length === 0`
+    if (!IsNumber(schema.maxItems)) throw Error('MaxItems: Not a Number')
     yield `(${value}.length === ${schema.maxItems})`
     for (let i = 0; i < schema.items.length; i++) {
       const expression = CreateExpression(schema.items[i], references, `${value}[${i}]`)
