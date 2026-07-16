@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/TemplateLiteral', () => {
+describe('type/compiler/TemplateLiteral', () => {
   // --------------------------------------------------------
   // Finite
   // --------------------------------------------------------
@@ -130,6 +130,7 @@ describe('compiler/TemplateLiteral', () => {
     Ok(T, 'ccc')
     Ok(T, 'dddd')
   })
+
   it('Should validate infinite pattern 5', () => {
     // prettier-ignore
     const T = Type.TemplateLiteral([

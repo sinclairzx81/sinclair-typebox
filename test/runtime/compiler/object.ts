@@ -1,13 +1,13 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Object', () => {
+describe('type/compiler/Object', () => {
   // -----------------------------------------------------
   // TypeCompiler Only
   // -----------------------------------------------------
   it('Should handle extends undefined check 1', () => {
     const T = Type.Object({
-      A: Type.Not(Type.Number()),
+      A: Type.Not(Type.Number(), Type.Undefined()),
       B: Type.Union([Type.Number(), Type.Undefined()]),
       C: Type.Intersect([Type.Undefined(), Type.Undefined()]),
     })
@@ -20,7 +20,7 @@ describe('compiler/Object', () => {
   // https://github.com/sinclairzx81/typebox/issues/437
   it('Should handle extends undefined check 2', () => {
     const T = Type.Object({
-      A: Type.Not(Type.Null()),
+      A: Type.Not(Type.Null(), Type.Undefined()),
     })
     Ok(T, { A: undefined })
     Fail(T, { A: null })
@@ -242,6 +242,7 @@ describe('compiler/Object', () => {
       z: 3,
     })
   })
+
   it('Should validate nested schema additional properties of string', () => {
     const T = Type.Object({
       nested: Type.Object(
@@ -325,6 +326,7 @@ describe('compiler/Object', () => {
       },
     })
   })
+
   it('Should check for property key if property type is undefined', () => {
     const T = Type.Object({ x: Type.Undefined() })
     Ok(T, { x: undefined })

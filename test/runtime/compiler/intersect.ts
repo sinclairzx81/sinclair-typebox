@@ -1,7 +1,7 @@
-import { Type } from '@sinclair/typebox'
+import { Type, Static } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Intersect', () => {
+describe('type/compiler/Intersect', () => {
   it('Should intersect number and number', () => {
     const A = Type.Number()
     const B = Type.Number()
@@ -87,6 +87,7 @@ describe('compiler/Intersect', () => {
     const T = Type.Intersect([A, B])
     Fail(T, { x: 1, y: 1 })
   })
+
   it('unevaluatedProperties with Record 1', () => {
     const T = Type.Intersect(
       [
