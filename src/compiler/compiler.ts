@@ -72,30 +72,6 @@ namespace Character {
   }
 }
 // -------------------------------------------------------------------
-// MemberExpression
-// -------------------------------------------------------------------
-namespace MemberExpression {
-  function IsFirstCharacterNumeric(value: string) {
-    if (value.length === 0) return false
-    return Character.IsNumeric(value.charCodeAt(0))
-  }
-  function IsAccessor(value: string) {
-    if (IsFirstCharacterNumeric(value)) return false
-    for (let i = 0; i < value.length; i++) {
-      const code = value.charCodeAt(i)
-      const check = Character.IsAlpha(code) || Character.IsNumeric(code) || Character.DollarSign(code) || Character.IsUnderscore(code)
-      if (!check) return false
-    }
-    return true
-  }
-  function EscapeHyphen(key: string) {
-    return key.replace(/'/g, "\\'")
-  }
-  export function Encode(object: string, key: string) {
-    return IsAccessor(key) ? `${object}.${key}` : `${object}['${EscapeHyphen(key)}']`
-  }
-}
-// -------------------------------------------------------------------
 // Identifier
 // -------------------------------------------------------------------
 namespace Identifier {
@@ -111,6 +87,24 @@ namespace Identifier {
     }
     return buffer.join('').replace(/__/g, '_')
   }
+}
+// ------------------------------------------------------------------
+// StringConstant
+// ------------------------------------------------------------------
+function IsString(value: string): value is string {
+  return typeof value === 'string'
+}
+function StringConstant(value: string): string {
+  if (!IsString(value)) throw Error('ConstantString: Not a String')
+  const canonical = JSON.stringify(value).slice(1, -1)
+  const escaped = canonical.replace(/'/g, "\\'")
+  return `'${escaped}'`
+}
+// ------------------------------------------------------------------
+// MemberExpression
+// ------------------------------------------------------------------
+function MemberExpression(value: string, key: string): string {
+  return `${value}[${StringConstant(key)}]`
 }
 // -------------------------------------------------------------------
 // Errors
@@ -149,7 +143,7 @@ export namespace TypeCompiler {
   // Polices
   // -------------------------------------------------------------------
   function IsExactOptionalProperty(value: string, key: string, expression: string) {
-    return TypeSystem.ExactOptionalPropertyTypes ? `('${key}' in ${value} ? ${expression} : true)` : `(${MemberExpression.Encode(value, key)} !== undefined ? ${expression} : true)`
+    return TypeSystem.ExactOptionalPropertyTypes ? `(${StringConstant(key)} in ${value} ? ${expression} : true)` : `(${MemberExpression(value, key)} !== undefined ? ${expression} : true)`
   }
   function IsObjectCheck(value: string): string {
     return !TypeSystem.AllowArrayObjects ? `(typeof ${value} === 'object' && ${value} !== null && !Array.isArray(${value}))` : `(typeof ${value} === 'object' && ${value} !== null)`
@@ -248,8 +242,10 @@ export namespace TypeCompiler {
   function* TLiteral(schema: Types.TLiteral, references: Types.TSchema[], value: string): IterableIterator<string> {
     if (typeof schema.const === 'number' || typeof schema.const === 'boolean') {
       yield `(${value} === ${schema.const})`
+    } else if (typeof schema.const === 'string') {
+      yield `(${value} === ${StringConstant(schema.const)})`
     } else {
-      yield `(${value} === '${schema.const}')`
+      throw Error('Invalid Literal Value')
     }
   }
   function* TNever(schema: Types.TNever, references: Types.TSchema[], value: string): IterableIterator<string> {
@@ -276,11 +272,11 @@ export namespace TypeCompiler {
     if (ValueGuard.IsNumber(schema.maxProperties)) yield `Object.getOwnPropertyNames(${value}).length <= ${schema.maxProperties}`
     const knownKeys = Object.getOwnPropertyNames(schema.properties)
     for (const knownKey of knownKeys) {
-      const memberExpression = MemberExpression.Encode(value, knownKey)
+      const memberExpression = MemberExpression(value, knownKey)
       const property = schema.properties[knownKey]
       if (schema.required && schema.required.includes(knownKey)) {
         yield* Visit(property, references, memberExpression)
-        if (Types.ExtendsUndefined.Check(property) || IsAnyOrUnknown(property)) yield `('${knownKey}' in ${value})`
+        if (Types.ExtendsUndefined.Check(property) || IsAnyOrUnknown(property)) yield `(${StringConstant(knownKey)} in ${value})`
       } else {
         const expression = CreateExpression(property, references, memberExpression)
         yield IsExactOptionalProperty(value, knownKey, expression)
@@ -290,13 +286,13 @@ export namespace TypeCompiler {
       if (schema.required && schema.required.length === knownKeys.length) {
         yield `Object.getOwnPropertyNames(${value}).length === ${knownKeys.length}`
       } else {
-        const keys = `[${knownKeys.map((key) => `'${key}'`).join(', ')}]`
+        const keys = `[${knownKeys.map((key) => `${StringConstant(key)}`).join(', ')}]`
         yield `Object.getOwnPropertyNames(${value}).every(key => ${keys}.includes(key))`
       }
     }
     if (typeof schema.additionalProperties === 'object') {
       const expression = CreateExpression(schema.additionalProperties, references, `${value}[key]`)
-      const keys = `[${knownKeys.map((key) => `'${key}'`).join(', ')}]`
+      const keys = `[${knownKeys.map((key) => `${StringConstant(key)}`).join(', ')}]`
       yield `(Object.getOwnPropertyNames(${value}).every(key => ${keys}.includes(key) || ${expression}))`
     }
   }
@@ -332,7 +328,7 @@ export namespace TypeCompiler {
       yield `${variable}.test(${value})`
     }
     if (schema.format !== undefined) {
-      yield `format('${schema.format}', ${value})`
+      yield `format(${StringConstant(schema.format)}, ${value})`
     }
   }
   function* TSymbol(schema: Types.TSymbol, references: Types.TSchema[], value: string): IterableIterator<string> {
@@ -377,7 +373,7 @@ export namespace TypeCompiler {
   function* TKind(schema: Types.TSchema, references: Types.TSchema[], value: string): IterableIterator<string> {
     const instance = state.instances.size
     state.instances.set(instance, schema)
-    yield `kind('${schema[Types.Kind]}', ${instance}, ${value})`
+    yield `kind(${StringConstant(schema[Types.Kind])}, ${instance}, ${value})`
   }
   function* Visit<T extends Types.TSchema>(schema: T, references: Types.TSchema[], value: string, useHoisting: boolean = true): IterableIterator<string> {
     const references_ = ValueGuard.IsString(schema.$id) ? [...references, schema] : references
