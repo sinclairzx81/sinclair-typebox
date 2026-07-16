@@ -7,7 +7,12 @@ export namespace Assert {
     const next = port++
     return next
   }
-
+  export function isTrue(value: boolean) {
+    return assert.strictEqual(value, true)
+  }
+  export function isFalse(value: boolean) {
+    return assert.strictEqual(value, false)
+  }
   export function equal(actual: unknown, expect: unknown) {
     return assert.equal(actual, expect)
   }
