@@ -97,30 +97,23 @@ namespace Identifier {
     return buffer.join('').replace(/__/g, '_')
   }
 }
-
-// -------------------------------------------------------------------
+// ------------------------------------------------------------------
+// StringConstant
+// ------------------------------------------------------------------
+function IsString(value: string): value is string {
+  return typeof value === 'string'
+}
+function StringConstant(value: string): string {
+  if (!IsString(value)) throw Error('ConstantString: Not a String')
+  const canonical = JSON.stringify(value).slice(1, -1)
+  const escaped = canonical.replace(/'/g, "\\'")
+  return `'${escaped}'`
+}
+// ------------------------------------------------------------------
 // MemberExpression
-// -------------------------------------------------------------------
-export namespace MemberExpression {
-  function Check(propertyName: string) {
-    if (propertyName.length === 0) return false
-    {
-      const code = propertyName.charCodeAt(0)
-      if (!(Character.DollarSign(code) || Character.Underscore(code) || Character.Alpha(code))) {
-        return false
-      }
-    }
-    for (let i = 1; i < propertyName.length; i++) {
-      const code = propertyName.charCodeAt(i)
-      if (!(Character.DollarSign(code) || Character.Underscore(code) || Character.Alpha(code) || Character.Numeric(code))) {
-        return false
-      }
-    }
-    return true
-  }
-  export function Encode(object: string, key: string) {
-    return !Check(key) ? `${object}['${key}']` : `${object}.${key}`
-  }
+// ------------------------------------------------------------------
+function MemberExpression(value: string, key: string): string {
+  return `${value}[${StringConstant(key)}]`
 }
 
 // -------------------------------------------------------------------
@@ -189,8 +182,10 @@ export namespace TypeCompiler {
   function* Literal(schema: Types.TLiteral, value: string): IterableIterator<string> {
     if (typeof schema.const === 'number' || typeof schema.const === 'boolean') {
       yield `(${value} === ${schema.const})`
+    } else if (typeof schema.const === 'string') {
+      yield `(${value} === ${StringConstant(schema.const)})`
     } else {
-      yield `(${value} === '${schema.const}')`
+      throw Error('Invalid Literal Value')
     }
   }
 
@@ -232,22 +227,22 @@ export namespace TypeCompiler {
       if (schema.required && schema.required.length === propertyKeys.length) {
         yield `(Object.getOwnPropertyNames(${value}).length === ${propertyKeys.length})`
       } else {
-        const keys = `[${propertyKeys.map((key) => `'${key}'`).join(', ')}]`
+        const keys = `[${propertyKeys.map((key) => `${StringConstant(key)}`).join(', ')}]`
         yield `(Object.getOwnPropertyNames(${value}).every(key => ${keys}.includes(key)))`
       }
     }
     if (TypeGuard.TSchema(schema.additionalProperties)) {
       const expression = CreateExpression(schema.additionalProperties, 'value[key]')
-      const keys = `[${propertyKeys.map((key) => `'${key}'`).join(', ')}]`
+      const keys = `[${propertyKeys.map((key) => `${StringConstant(key)}`).join(', ')}]`
       yield `(Object.getOwnPropertyNames(${value}).every(key => ${keys}.includes(key) || ${expression}))`
     }
     for (const propertyKey of propertyKeys) {
-      const memberExpression = MemberExpression.Encode(value, propertyKey)
+      const memberExpression = MemberExpression(value, propertyKey)
       const propertySchema = schema.properties[propertyKey]
       if (schema.required && schema.required.includes(propertyKey)) {
         yield* Visit(propertySchema, memberExpression)
         if (TypeExtends.Undefined(propertySchema)) {
-          yield `('${propertyKey}' in ${value})`
+          yield `(${StringConstant(propertyKey)} in ${value})`
         }
       } else {
         const expression = CreateExpression(propertySchema, memberExpression)
@@ -267,7 +262,7 @@ export namespace TypeCompiler {
       yield `(typeof ${value} === 'object' && ${value} !== null && !(${value} instanceof Date) && !Array.isArray(${value}))`
     }
     const [keyPattern, valueSchema] = globalThis.Object.entries(schema.patternProperties)[0]
-    const local = PushLocal(`new RegExp(/${keyPattern}/)`)
+    const local = PushLocal(`${new RegExp(keyPattern)}`)
     yield `(Object.getOwnPropertyNames(${value}).every(key => ${local}.test(key)))`
     const expression = CreateExpression(valueSchema, 'value')
     yield `(Object.values(${value}).every(value => ${expression}))`
@@ -293,17 +288,18 @@ export namespace TypeCompiler {
     if (IsNumber(schema.minLength)) yield `(${value}.length >= ${schema.minLength})`
     if (IsNumber(schema.maxLength)) yield `(${value}.length <= ${schema.maxLength})`
     if (schema.pattern !== undefined) {
-      const local = PushLocal(`${new RegExp(schema.pattern)};`)
+      const local = PushLocal(`${new RegExp(schema.pattern)}`)
       yield `(${local}.test(${value}))`
     }
     if (schema.format !== undefined) {
-      yield `(format('${schema.format}', ${value}))`
+      yield `(format(${StringConstant(schema.format)}, ${value}))`
     }
   }
 
   function* Tuple(schema: Types.TTuple<any[]>, value: string): IterableIterator<string> {
     yield `(Array.isArray(${value}))`
     if (schema.items === undefined) return yield `(${value}.length === 0)`
+    if (!IsNumber(schema.maxItems)) throw Error('MaxItems: Not a Number')
     yield `(${value}.length === ${schema.maxItems})`
     for (let i = 0; i < schema.items.length; i++) {
       const expression = CreateExpression(schema.items[i], `${value}[${i}]`)
@@ -337,7 +333,7 @@ export namespace TypeCompiler {
   function* UserDefined(schema: Types.TSchema, value: string): IterableIterator<string> {
     const schema_key = `schema_key_${state_remote_custom_types.size}`
     state_remote_custom_types.set(schema_key, schema)
-    yield `(custom('${schema[Types.Kind]}', '${schema_key}', ${value}))`
+    yield `(custom(${StringConstant(schema[Types.Kind])}, '${schema_key}', ${value}))`
   }
 
   function* Visit<T extends Types.TSchema>(schema: T, value: string): IterableIterator<string> {

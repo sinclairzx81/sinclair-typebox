@@ -1,3 +1,4 @@
+import './__escape'
 import './any'
 import './array'
 import './boolean'
