@@ -1,23 +1,23 @@
 import { Type } from '@sinclair/typebox'
-import { Ok, Fail } from './validate'
+import { ok, fail } from './validate'
 import { strictEqual } from 'assert'
 
-describe('compiler/ReadonlyOptional', () => {
+describe('type/compiler/ReadonlyOptional', () => {
   it('Should validate object with optional', () => {
     const T = Type.Object(
       {
-        a: Type.Readonly(Type.Optional(Type.String())),
+        a: Type.ReadonlyOptional(Type.String()),
         b: Type.String(),
       },
       { additionalProperties: false },
     )
-    Ok(T, { a: 'hello', b: 'world' })
-    Ok(T, { b: 'world' })
+    ok(T, { a: 'hello', b: 'world' })
+    ok(T, { b: 'world' })
   })
   it('Should remove required value from schema', () => {
     const T = Type.Object(
       {
-        a: Type.Readonly(Type.Optional(Type.String())),
+        a: Type.ReadonlyOptional(Type.String()),
         b: Type.String(),
       },
       { additionalProperties: false },

@@ -1,8 +1,8 @@
-import { Type, ReadonlyKind, OptionalKind } from '@sinclair/typebox'
-import { Ok, Fail } from './validate'
+import { Type, Modifier } from '@sinclair/typebox'
+import { ok, fail } from './validate'
 import { strictEqual } from 'assert'
 
-describe('compiler/Required', () => {
+describe('type/compiler/compiler/Required', () => {
   it('Should convert a partial object into a required object', () => {
     const A = Type.Object(
       {
@@ -13,24 +13,26 @@ describe('compiler/Required', () => {
       { additionalProperties: false },
     )
     const T = Type.Required(A)
-    Ok(T, { x: 1, y: 1, z: 1 })
-    Fail(T, { x: 1, y: 1 })
-    Fail(T, { x: 1 })
-    Fail(T, {})
+    ok(T, { x: 1, y: 1, z: 1 })
+    fail(T, { x: 1, y: 1 })
+    fail(T, { x: 1 })
+    fail(T, {})
   })
+
   it('Should update modifier types correctly when converting to required', () => {
     const A = Type.Object({
-      x: Type.Readonly(Type.Optional(Type.Number())),
+      x: Type.ReadonlyOptional(Type.Number()),
       y: Type.Readonly(Type.Number()),
       z: Type.Optional(Type.Number()),
       w: Type.Number(),
     })
     const T = Type.Required(A)
-    strictEqual(T.properties.x[ReadonlyKind], 'Readonly')
-    strictEqual(T.properties.y[ReadonlyKind], 'Readonly')
-    strictEqual(T.properties.z[OptionalKind], undefined)
-    strictEqual(T.properties.w[OptionalKind], undefined)
+    strictEqual(T.properties.x[Modifier], 'Readonly')
+    strictEqual(T.properties.y[Modifier], 'Readonly')
+    strictEqual(T.properties.z[Modifier], undefined)
+    strictEqual(T.properties.w[Modifier], undefined)
   })
+
   it('Should inherit options from the source object', () => {
     const A = Type.Object(
       {

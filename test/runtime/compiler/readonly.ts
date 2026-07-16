@@ -1,8 +1,8 @@
 import { deepStrictEqual, strictEqual } from 'assert'
 import { Type } from '@sinclair/typebox'
-import { Ok, Fail } from './validate'
+import { ok, fail } from './validate'
 
-describe('compiler/Readonly', () => {
+describe('type/compiler/Readonly', () => {
   it('Should validate object with readonly', () => {
     const T = Type.Object(
       {
@@ -11,8 +11,9 @@ describe('compiler/Readonly', () => {
       },
       { additionalProperties: false },
     )
-    Ok(T, { a: 'hello', b: 'world' })
+    ok(T, { a: 'hello', b: 'world' })
   })
+
   it('Should retain required array on object', () => {
     const T = Type.Object(
       {

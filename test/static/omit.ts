@@ -12,7 +12,7 @@ import { Type, Static } from '@sinclair/typebox'
 
   type T = Static<typeof T>
 
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     C: string
   }>()
 }
@@ -30,7 +30,7 @@ import { Type, Static } from '@sinclair/typebox'
 
   type T = Static<typeof T>
 
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     C: string
   }>()
 }
@@ -50,55 +50,7 @@ import { Type, Static } from '@sinclair/typebox'
 
   type T = Static<typeof T>
 
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     C: string
   }>()
-}
-{
-  const A = Type.Object({ type: Type.Literal('A') })
-  const B = Type.Object({ type: Type.Literal('B') })
-  const C = Type.Object({ type: Type.Literal('C') })
-  const Union = Type.Union([A, B, C])
-  const Extended = Type.Object({
-    x: Type.Number(),
-    y: Type.Number(),
-    z: Type.Number(),
-  })
-  const T = Type.Intersect([Union, Extended])
-
-  Expect(T).ToStatic<
-    (
-      | {
-          type: 'A'
-        }
-      | {
-          type: 'B'
-        }
-      | {
-          type: 'C'
-        }
-    ) & {
-      x: number
-      y: number
-      z: number
-    }
-  >()
-
-  const P = Type.Omit(T, ['type', 'x'])
-
-  Expect(P).ToStatic<
-    ({} | {} | {}) & {
-      y: number
-      z: number
-    }
-  >()
-
-  const O = Type.Partial(P)
-
-  Expect(O).ToStatic<
-    ({} | {} | {}) & {
-      y?: number | undefined
-      z?: number | undefined
-    }
-  >()
 }

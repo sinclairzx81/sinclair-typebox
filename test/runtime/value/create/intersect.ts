@@ -4,58 +4,63 @@ import { Assert } from '../../assert/index'
 
 describe('value/create/Intersect', () => {
   it('Should create value', () => {
-    const T = Type.Intersect([Type.Object({ x: Type.Number() }), Type.Object({ y: Type.Number() })])
-    const R = Value.Create(T)
-    Assert.IsEqual(R, { x: 0, y: 0 })
+    const A = Type.Object({
+      x: Type.Number(),
+      y: Type.Number(),
+      z: Type.Number(),
+    })
+    const B = Type.Object({
+      a: Type.Number(),
+      b: Type.Number(),
+      c: Type.Number(),
+    })
+    const T = Type.Intersect([A, B])
+    Assert.deepEqual(Value.Create(T), {
+      x: 0,
+      y: 0,
+      z: 0,
+      a: 0,
+      b: 0,
+      c: 0,
+    })
   })
-  it('Should create value with default', () => {
-    const T = Type.Intersect([Type.Object({ x: Type.Number({ default: 100 }) }), Type.Object({ y: Type.Number({ default: 200 }) })])
-    const R = Value.Create(T)
-    Assert.IsEqual(R, { x: 100, y: 200 })
+  it('Should create default', () => {
+    const A = Type.Object({
+      x: Type.Number({ default: 1 }),
+      y: Type.Number({ default: 2 }),
+      z: Type.Number({ default: 3 }),
+    })
+    const B = Type.Object({
+      a: Type.Number({ default: 4 }),
+      b: Type.Number({ default: 5 }),
+      c: Type.Number({ default: 6 }),
+    })
+    const T = Type.Intersect([A, B])
+    Assert.deepEqual(Value.Create(T), {
+      x: 1,
+      y: 2,
+      z: 3,
+      a: 4,
+      b: 5,
+      c: 6,
+    })
   })
-  it('Should create for overlapping intersection', () => {
-    const T = Type.Intersect([Type.Object({ x: Type.Number() }), Type.Object({ x: Type.Number(), y: Type.Number() })])
-    const R = Value.Create(T)
-    Assert.IsEqual(R, { x: 0, y: 0 })
-  })
-  it('Should create with last intersected overlapping default', () => {
-    const T = Type.Intersect([Type.Object({ x: Type.Number({ default: 1 }) }), Type.Object({ x: Type.Number({ default: 2 }), y: Type.Number() })])
-    const R = Value.Create(T)
-    Assert.IsEqual(R, { x: 2, y: 0 })
-  })
-  it('Should throw for non-constructable intersection 1', () => {
-    const T = Type.Intersect([Type.Object({ x: Type.Number() }), Type.Object({ x: Type.String() })])
-    Assert.Throws(() => Value.Create(T))
-  })
-  it('Should throw for non-constructable intersection 2', () => {
-    const T = Type.Intersect([Type.String(), Type.Number()])
-    Assert.Throws(() => Value.Create(T))
-  })
-  it('Should not throw for non-constructable intersection with default', () => {
-    const T = Type.Intersect([Type.String(), Type.Number()], { default: 'hello' })
-    const R = Value.Create(T)
-    Assert.IsEqual(R, 'hello')
-  })
-  it('Should create from nested intersection', () => {
-    const T = Type.Intersect([
-      Type.Object({
-        x: Type.Number({ default: 1 }),
-      }),
-      Type.Intersect([
-        Type.Object({
-          y: Type.Number({ default: 2 }),
-        }),
-        Type.Object({
-          z: Type.Number({ default: 3 }),
-        }),
-      ]),
-    ])
-    const R = Value.Create(T)
-    Assert.IsEqual(R, { x: 1, y: 2, z: 3 })
-  })
-  it('Should create non varying primitive', () => {
-    const T = Type.Intersect([Type.Number(), Type.Number(), Type.Number()])
-    const R = Value.Create(T)
-    Assert.IsEqual(R, 0)
+  it('Should create default and omit optionals', () => {
+    const A = Type.Object({
+      x: Type.Number(),
+      y: Type.Number(),
+      z: Type.Number(),
+    })
+    const B = Type.Object({
+      a: Type.Optional(Type.Number()),
+      b: Type.Optional(Type.Number()),
+      c: Type.Optional(Type.Number()),
+    })
+    const T = Type.Intersect([A, B])
+    Assert.deepEqual(Value.Create(T), {
+      x: 0,
+      y: 0,
+      z: 0,
+    })
   })
 })

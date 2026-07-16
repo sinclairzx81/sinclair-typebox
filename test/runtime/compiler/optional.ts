@@ -1,8 +1,8 @@
 import { strictEqual } from 'assert'
 import { Type } from '@sinclair/typebox'
-import { Ok } from './validate'
+import { ok } from './validate'
 
-describe('compiler/Optional', () => {
+describe('type/compiler/Optional', () => {
   it('Should validate object with optional', () => {
     const T = Type.Object(
       {
@@ -11,8 +11,8 @@ describe('compiler/Optional', () => {
       },
       { additionalProperties: false },
     )
-    Ok(T, { a: 'hello', b: 'world' })
-    Ok(T, { b: 'world' })
+    ok(T, { a: 'hello', b: 'world' })
+    ok(T, { b: 'world' })
   })
   it('Should remove required value from schema', () => {
     const T = Type.Object(

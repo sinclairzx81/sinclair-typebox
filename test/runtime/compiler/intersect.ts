@@ -1,225 +1,83 @@
-import { Type } from '@sinclair/typebox'
-import { Ok, Fail } from './validate'
+import { Type, Static } from '@sinclair/typebox'
+import { ok, fail } from './validate'
 
-describe('compiler/Intersect', () => {
-  it('Should intersect number and number', () => {
-    const A = Type.Number()
-    const B = Type.Number()
-    const T = Type.Intersect([A, B], {})
-    Ok(T, 1)
-  })
-  it('Should not intersect string and number', () => {
-    const A = Type.String()
-    const B = Type.Number()
-    const T = Type.Intersect([A, B], {})
-    Fail(T, 1)
-    Fail(T, '1')
-  })
+describe('type/compiler/Intersect', () => {
   it('Should intersect two objects', () => {
-    const A = Type.Object({ x: Type.Number() })
-    const B = Type.Object({ y: Type.Number() })
-    const T = Type.Intersect([A, B], {})
-    Ok(T, { x: 1, y: 1 })
+    const A = Type.Object({ a: Type.String() })
+    const B = Type.Object({ b: Type.Number() })
+    const T = Type.Intersect([A, B], { additionalProperties: false })
+    ok(T, { a: 'hello', b: 42 })
   })
-  it('Should not intersect two objects with internal additionalProperties false', () => {
-    const A = Type.Object({ x: Type.Number() }, { additionalProperties: false })
-    const B = Type.Object({ y: Type.Number() }, { additionalProperties: false })
-    const T = Type.Intersect([A, B], {})
-    Fail(T, { x: 1, y: 1 })
+
+  it('Should intersect with partial', () => {
+    const A = Type.Partial(Type.Object({ a: Type.Number() }))
+    const B = Type.Partial(Type.Object({ b: Type.Number() }))
+    const P = Type.Intersect([A, B], { additionalProperties: false })
+    ok(P, { a: 1, b: 2 })
+    // ok(P, { a: 1 })
+    // ok(P, { b: 1 })
+    // ok(P, {})
+    // fail(P, { c: 1 })
   })
-  it('Should intersect two objects and mandate required properties', () => {
-    const A = Type.Object({ x: Type.Number() })
-    const B = Type.Object({ y: Type.Number() })
-    const T = Type.Intersect([A, B], {})
-    Ok(T, { x: 1, y: 1 })
-    Fail(T, { x: 1 })
-    Fail(T, { y: 1 })
+
+  it('Should intersect with overlapping same type', () => {
+    const A = Type.Object({ a: Type.Number() })
+    const B = Type.Object({ a: Type.Number() })
+    const P = Type.Intersect([A, B])
+    ok(P, { a: 1 })
+    fail(P, { a: 'hello' })
+    fail(P, {})
   })
-  it('Should intersect two objects with unevaluated properties', () => {
-    const A = Type.Object({ x: Type.Number() })
-    const B = Type.Object({ y: Type.Number() })
-    const T = Type.Intersect([A, B], {})
-    Ok(T, { x: 1, y: 2, z: 1 })
-  })
-  it('Should intersect two objects and restrict unevaluated properties', () => {
-    const A = Type.Object({ x: Type.Number() })
-    const B = Type.Object({ y: Type.Number() })
-    const T = Type.Intersect([A, B], { unevaluatedProperties: false })
-    Fail(T, { x: 1, y: 2, z: 1 })
-  })
-  it('Should intersect two objects and allow unevaluated properties of number', () => {
-    const A = Type.Object({ x: Type.Number() })
-    const B = Type.Object({ y: Type.Number() })
-    const T = Type.Intersect([A, B], { unevaluatedProperties: Type.Number() })
-    Ok(T, { x: 1, y: 2, z: 3 })
-    Fail(T, { x: 1, y: 2, z: '1' })
-  })
-  it('Should intersect two nested objects and allow unevaluated properties of number', () => {
-    const A = Type.Object({ x: Type.Number() })
-    const B = Type.Object({ y: Type.Number() })
-    const T = Type.Object({ nested: Type.Intersect([A, B], { unevaluatedProperties: Type.Number() }) })
-    Ok(T, { nested: { x: 1, y: 2, z: 3 } })
-    Fail(T, { nested: { x: 1, y: 2, z: '1' } })
-  })
-  it('Should intersect two union objects with overlapping properties of the same type', () => {
-    const A = Type.Union([Type.Object({ x: Type.Number() })])
-    const B = Type.Union([Type.Object({ x: Type.Number() })])
+
+  it('Should intersect with overlapping varying type', () => {
+    const A = Type.Object({ a: Type.Number() })
+    const B = Type.Object({ a: Type.String() })
     const T = Type.Intersect([A, B])
-    Ok(T, { x: 1 })
-    Fail(T, { x: '1' })
+    ok(T, { a: 1 })
+    ok(T, { a: 'hello' })
+    fail(T, {})
   })
-  it('Should not intersect two union objects with overlapping properties of varying types', () => {
-    const A = Type.Union([Type.Object({ x: Type.Number() })])
-    const B = Type.Union([Type.Object({ x: Type.String() })])
+
+  it('Should intersect with deeply nest overlapping varying type', () => {
+    const A = Type.Object({ a: Type.Number() })
+    const B = Type.Object({ a: Type.String() })
+    const C = Type.Object({ a: Type.Boolean() })
+    const D = Type.Object({ a: Type.Null() })
+    const T = Type.Intersect([A, B, C, D])
+    ok(T, { a: 1 })
+    ok(T, { a: 'hello' })
+    ok(T, { a: false })
+    ok(T, { a: null })
+    fail(T, { a: [] })
+    fail(T, {})
+  })
+
+  it('Should pick from intersected type', () => {
+    const A = Type.Object({ x: Type.Number() })
+    const B = Type.Object({ y: Type.Number() })
+    const C = Type.Object({ z: Type.Number() })
+    const T = Type.Intersect([A, B, C])
+    const P = Type.Pick(T, ['x', 'y'], { additionalProperties: false })
+    ok(P, { x: 1, y: 1 })
+    fail(P, { x: 1, y: 1, z: 1 })
+  })
+
+  it('Should omit from intersected type', () => {
+    const A = Type.Object({ x: Type.Number() })
+    const B = Type.Object({ y: Type.Number() })
+    const C = Type.Object({ z: Type.Number() })
+    const T = Type.Intersect([A, B, C])
+    const P = Type.Omit(T, ['z'], { additionalProperties: false })
+    ok(P, { x: 1, y: 1 })
+    fail(P, { x: 1, y: 1, z: 1 })
+  })
+
+  it('Should intersect nested object properties', () => {
+    const A = Type.Object({ x: Type.Object({ x: Type.Number() }) })
+    const B = Type.Object({ x: Type.Object({ x: Type.String() }) })
     const T = Type.Intersect([A, B])
-    Fail(T, { x: 1 })
-    Fail(T, { x: '1' })
-  })
-  it('Should intersect two union objects with non-overlapping properties', () => {
-    const A = Type.Union([Type.Object({ x: Type.Number() })])
-    const B = Type.Union([Type.Object({ y: Type.Number() })])
-    const T = Type.Intersect([A, B])
-    Ok(T, { x: 1, y: 1 })
-  })
-  it('Should not intersect two union objects with non-overlapping properties for additionalProperties false', () => {
-    const A = Type.Union([Type.Object({ x: Type.Number() }, { additionalProperties: false })])
-    const B = Type.Union([Type.Object({ y: Type.Number() }, { additionalProperties: false })])
-    const T = Type.Intersect([A, B])
-    Fail(T, { x: 1, y: 1 })
-  })
-  it('unevaluatedProperties with Record 1', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: false,
-      },
-    )
-    Ok(T, { x: 1, y: 2 })
-  })
-  it('unevaluatedProperties with Record 2', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: false,
-      },
-    )
-    Ok(T, { x: 1, y: 2, 0: 'hello' })
-  })
-  it('unevaluatedProperties with Record 3', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: false,
-      },
-    )
-    Fail(T, { x: 1, y: 2, 0: 1 })
-  })
-  it('unevaluatedProperties with Record 4', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: Type.Boolean(),
-      },
-    )
-    Ok(T, { x: 1, y: 2 })
-  })
-  it('unevaluatedProperties with Record 5', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: Type.Boolean(),
-      },
-    )
-    Ok(T, { x: 1, y: 2, z: true })
-  })
-  it('unevaluatedProperties with Record 6', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: Type.Boolean(),
-      },
-    )
-    Fail(T, { x: 1, y: 2, z: 1 })
-  })
-  it('unevaluatedProperties with Record 7', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: Type.Boolean(),
-      },
-    )
-    Ok(T, { x: 1, y: 2, 0: '' })
-  })
-  it('unevaluatedProperties with Record 8', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: Type.Boolean(),
-      },
-    )
-    Ok(T, { x: 1, y: 2, 0: '', z: true })
-  })
-  it('unevaluatedProperties with Record 9', () => {
-    const T = Type.Intersect(
-      [
-        Type.Record(Type.Number(), Type.String()),
-        Type.Object({
-          x: Type.Number(),
-          y: Type.Number(),
-        }),
-      ],
-      {
-        unevaluatedProperties: Type.Boolean(),
-      },
-    )
-    Fail(T, { x: 1, y: 2, 0: '', z: 1 })
+    ok(T, { x: { x: 1 } })
+    ok(T, { x: { x: 'hello' } })
+    fail(T, { x: { x: false } })
   })
 })

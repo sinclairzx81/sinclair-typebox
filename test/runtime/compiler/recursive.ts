@@ -1,8 +1,8 @@
 import { Type } from '@sinclair/typebox'
 import { Assert } from '../assert/index'
-import { Ok, Fail } from './validate'
+import { ok, fail } from './validate'
 
-describe('compiler/Recursive', () => {
+describe('type/compiler/Recursive', () => {
   it('Should generate default ordinal $id if not specified', () => {
     const Node = Type.Recursive((Node) =>
       Type.Object({
@@ -10,8 +10,9 @@ describe('compiler/Recursive', () => {
         nodes: Type.Array(Node),
       }),
     )
-    Assert.IsEqual(Node.$id === undefined, false)
+    Assert.equal(Node.$id === undefined, false)
   })
+
   it('Should override default ordinal $id if specified', () => {
     const Node = Type.Recursive(
       (Node) =>
@@ -21,16 +22,17 @@ describe('compiler/Recursive', () => {
         }),
       { $id: 'Node' },
     )
-    Assert.IsEqual(Node.$id === 'Node', true)
+    Assert.equal(Node.$id === 'Node', true)
   })
+
   it('Should validate recursive node type', () => {
-    const Node = Type.Recursive((This) =>
+    const Node = Type.Recursive((Self) =>
       Type.Object({
         id: Type.String(),
-        nodes: Type.Array(This),
+        nodes: Type.Array(Self),
       }),
     )
-    Ok(Node, {
+    ok(Node, {
       id: 'A',
       nodes: [
         { id: 'B', nodes: [] },
@@ -38,16 +40,17 @@ describe('compiler/Recursive', () => {
       ],
     })
   })
+
   it('Should validate wrapped recursive node type', () => {
     const Node = Type.Tuple([
-      Type.Recursive((This) =>
+      Type.Recursive((Self) =>
         Type.Object({
           id: Type.String(),
-          nodes: Type.Array(This),
+          nodes: Type.Array(Self),
         }),
       ),
     ])
-    Ok(Node, [
+    ok(Node, [
       {
         id: 'A',
         nodes: [
@@ -57,16 +60,17 @@ describe('compiler/Recursive', () => {
       },
     ])
   })
+
   it('Should not validate wrapped recursive node type with invalid id', () => {
     const Node = Type.Tuple([
-      Type.Recursive((This) =>
+      Type.Recursive((Self) =>
         Type.Object({
           id: Type.String(),
-          nodes: Type.Array(This),
+          nodes: Type.Array(Self),
         }),
       ),
     ])
-    Fail(Node, [
+    fail(Node, [
       {
         id: 'A',
         nodes: [

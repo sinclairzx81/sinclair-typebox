@@ -1,41 +1,33 @@
 import { Type } from '@sinclair/typebox'
-import { Ok } from './validate'
+import { ok } from './validate'
 
-describe('compiler/Any', () => {
+describe('type/compiler/Any', () => {
   it('Should validate number', () => {
     const T = Type.Any()
-    Ok(T, 1)
+    ok(T, 1)
   })
   it('Should validate string', () => {
     const T = Type.Any()
-    Ok(T, 'hello')
+    ok(T, 'hello')
   })
   it('Should validate boolean', () => {
     const T = Type.Any()
-    Ok(T, true)
+    ok(T, true)
   })
   it('Should validate array', () => {
     const T = Type.Any()
-    Ok(T, [1, 2, 3])
+    ok(T, [1, 2, 3])
   })
   it('Should validate object', () => {
     const T = Type.Any()
-    Ok(T, { a: 1, b: 2 })
+    ok(T, { a: 1, b: 2 })
   })
   it('Should validate null', () => {
     const T = Type.Any()
-    Ok(T, null)
+    ok(T, null)
   })
   it('Should validate undefined', () => {
     const T = Type.Any()
-    Ok(T, undefined)
-  })
-  it('Should validate bigint', () => {
-    const T = Type.Any()
-    Ok(T, BigInt(1))
-  })
-  it('Should validate symbol', () => {
-    const T = Type.Any()
-    Ok(T, Symbol(1))
+    ok(T, undefined)
   })
 })

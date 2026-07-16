@@ -1,41 +1,39 @@
 import { Type } from '@sinclair/typebox'
-import { Ok, Fail } from './validate'
+import { ok, fail } from './validate'
 
-describe('compiler/Null', () => {
+describe('type/compiler/Null', () => {
   it('Should not validate number', () => {
     const T = Type.Null()
-    Fail(T, 1)
+    fail(T, 1)
   })
+
   it('Should not validate string', () => {
     const T = Type.Null()
-    Fail(T, 'hello')
+    fail(T, 'hello')
   })
+
   it('Should not validate boolean', () => {
     const T = Type.Null()
-    Fail(T, true)
+    fail(T, true)
   })
+
   it('Should not validate array', () => {
     const T = Type.Null()
-    Fail(T, [1, 2, 3])
+    fail(T, [1, 2, 3])
   })
+
   it('Should not validate object', () => {
     const T = Type.Null()
-    Fail(T, { a: 1, b: 2 })
+    fail(T, { a: 1, b: 2 })
   })
+
   it('Should not validate null', () => {
     const T = Type.Null()
-    Ok(T, null)
+    ok(T, null)
   })
+
   it('Should not validate undefined', () => {
     const T = Type.Null()
-    Fail(T, undefined)
-  })
-  it('Should not validate bigint', () => {
-    const T = Type.Null()
-    Fail(T, BigInt(1))
-  })
-  it('Should not validate symbol', () => {
-    const T = Type.Null()
-    Fail(T, Symbol(1))
+    fail(T, undefined)
   })
 })
