@@ -1,2 +1,1 @@
 import './format'
-import './type'
