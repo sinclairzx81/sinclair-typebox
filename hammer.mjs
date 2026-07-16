@@ -55,9 +55,15 @@ export async function build(target = 'target/build') {
 // -------------------------------------------------------------
 // Publish
 // -------------------------------------------------------------
-export async function publish(otp, target = 'target/build') {
-    const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
-    await shell(`cd ${target} && npm publish sinclair-typebox-${version}.tgz --access=public --otp ${otp}`)
-    await shell(`git tag ${version}`)
-    await shell(`git push origin ${version}`)
+// export async function publish(otp, target = 'target/build') {
+//     const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+//     await shell(`cd ${target} && npm publish sinclair-typebox-${version}.tgz --access=public --otp ${otp}`)
+//     await shell(`git tag ${version}`)
+//     await shell(`git push origin ${version}`)
+// }
+export async function publish(target = 'target/build') {
+  const { version } = JSON.parse(readFileSync('./target/build/package.json', 'utf8'))
+  console.log('publishing', { version })
+  await shell(`git tag ${version}`)
+  await shell(`git push origin ${version}`)
 }
