@@ -3,7 +3,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { Ok, Fail } from './validate'
 import { Assert } from '../assert'
 
-describe('compiler/Kind', () => {
+describe('type/compiler/Kind', () => {
   // ------------------------------------------------------------
   // Fixtures
   // ------------------------------------------------------------

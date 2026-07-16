@@ -2,7 +2,7 @@ import { Value } from '@sinclair/typebox/value'
 import { Type } from '@sinclair/typebox'
 import { Assert } from '../../assert/index'
 
-describe('value/cast/RegExp', () => {
+describe('value/cast/RegEx', () => {
   const T = Type.RegExp(/foo/, { default: 'foo' })
   const E = 'foo'
   it('Should upcast from string', () => {
@@ -49,12 +49,5 @@ describe('value/cast/RegExp', () => {
     const value = 'foo'
     const result = Value.Cast(T, value)
     Assert.IsEqual(result, value)
-  })
-  // ----------------------------------------------------------------
-  // Throw
-  // ----------------------------------------------------------------
-  it('Should throw with no default', () => {
-    const T = Type.RegExp(/foo/)
-    Assert.Throws(() => Value.Cast(T, null))
   })
 })

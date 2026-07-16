@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2026 Haydn Paterson
+Copyright (c) 2017-2023 Haydn Paterson (sinclair) <haydn.developer@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,174 +26,93 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-import { TypeSystemPolicy } from '../system/index'
-import { KeyOfPattern } from '../type/keyof/index'
-import { TypeRegistry, FormatRegistry } from '../type/registry/index'
-import { ExtendsUndefinedCheck } from '../type/extends/extends-undefined'
-import { GetErrorFunction } from './function'
-import { TypeBoxError } from '../type/error/index'
-import { Deref } from '../value/deref/index'
-import { Hash } from '../value/hash/index'
-import { Check } from '../value/check/index'
-import { Kind } from '../type/symbols/index'
+import { TypeSystem } from '../system/index'
+import * as Types from '../typebox'
+import * as ValueHash from '../value/hash'
+import * as ValueGuard from '../value/guard'
 
-import type { TSchema } from '../type/schema/index'
-import type { TAsyncIterator } from '../type/async-iterator/index'
-import type { TAny } from '../type/any/index'
-import type { TArray } from '../type/array/index'
-import type { TBigInt } from '../type/bigint/index'
-import type { TBoolean } from '../type/boolean/index'
-import type { TDate } from '../type/date/index'
-import type { TConstructor } from '../type/constructor/index'
-import type { TFunction } from '../type/function/index'
-import type { TImport } from '../type/module/index'
-import type { TInteger } from '../type/integer/index'
-import type { TIntersect } from '../type/intersect/index'
-import type { TIterator } from '../type/iterator/index'
-import type { TLiteral } from '../type/literal/index'
-import { Never, type TNever } from '../type/never/index'
-import type { TNot } from '../type/not/index'
-import type { TNull } from '../type/null/index'
-import type { TNumber } from '../type/number/index'
-import type { TObject } from '../type/object/index'
-import type { TPromise } from '../type/promise/index'
-import type { TRecord } from '../type/record/index'
-import type { TRef } from '../type/ref/index'
-import type { TRegExp } from '../type/regexp/index'
-import type { TTemplateLiteral } from '../type/template-literal/index'
-import type { TThis } from '../type/recursive/index'
-import type { TTuple } from '../type/tuple/index'
-import type { TUnion } from '../type/union/index'
-import type { TUnknown } from '../type/unknown/index'
-import type { TString } from '../type/string/index'
-import type { TSymbol } from '../type/symbol/index'
-import type { TUndefined } from '../type/undefined/index'
-import type { TUint8Array } from '../type/uint8array/index'
-import type { TVoid } from '../type/void/index'
-// ------------------------------------------------------------------
-// ValueGuard
-// ------------------------------------------------------------------
-// prettier-ignore
-import { 
-  IsArray, 
-  IsUint8Array, 
-  IsDate, 
-  IsPromise, 
-  IsFunction, 
-  IsAsyncIterator, 
-  IsIterator, 
-  IsBoolean, 
-  IsNumber, 
-  IsBigInt, 
-  IsString, 
-  IsSymbol, 
-  IsInteger, 
-  IsNull, 
-  IsUndefined 
-} from '../value/guard/index'
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // ValueErrorType
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------
 export enum ValueErrorType {
-  ArrayContains,
-  ArrayMaxContains,
-  ArrayMaxItems,
-  ArrayMinContains,
-  ArrayMinItems,
-  ArrayUniqueItems,
   Array,
+  ArrayMinItems,
+  ArrayMaxItems,
+  ArrayContains,
+  ArrayMinContains,
+  ArrayMaxContains,
+  ArrayUniqueItems,
   AsyncIterator,
-  BigIntExclusiveMaximum,
-  BigIntExclusiveMinimum,
-  BigIntMaximum,
-  BigIntMinimum,
-  BigIntMultipleOf,
   BigInt,
+  BigIntMultipleOf,
+  BigIntExclusiveMinimum,
+  BigIntExclusiveMaximum,
+  BigIntMinimum,
+  BigIntMaximum,
   Boolean,
-  DateExclusiveMaximumTimestamp,
-  DateExclusiveMinimumTimestamp,
-  DateMaximumTimestamp,
-  DateMinimumTimestamp,
-  DateMultipleOfTimestamp,
   Date,
+  DateExclusiveMinimumTimestamp,
+  DateExclusiveMaximumTimestamp,
+  DateMinimumTimestamp,
+  DateMaximumTimestamp,
   Function,
-  IntegerExclusiveMaximum,
-  IntegerExclusiveMinimum,
-  IntegerMaximum,
-  IntegerMinimum,
-  IntegerMultipleOf,
   Integer,
-  IntersectUnevaluatedProperties,
+  IntegerMultipleOf,
+  IntegerExclusiveMinimum,
+  IntegerExclusiveMaximum,
+  IntegerMinimum,
+  IntegerMaximum,
   Intersect,
+  IntersectUnevaluatedProperties,
   Iterator,
-  Kind,
   Literal,
   Never,
   Not,
   Null,
-  NumberExclusiveMaximum,
-  NumberExclusiveMinimum,
-  NumberMaximum,
-  NumberMinimum,
-  NumberMultipleOf,
   Number,
-  ObjectAdditionalProperties,
-  ObjectMaxProperties,
-  ObjectMinProperties,
-  ObjectRequiredProperty,
+  NumberMultipleOf,
+  NumberExclusiveMinimum,
+  NumberExclusiveMaximum,
+  NumberMinimum,
+  NumberMaximum,
   Object,
+  ObjectMinProperties,
+  ObjectMaxProperties,
+  ObjectAdditionalProperties,
+  ObjectRequiredProperties,
   Promise,
-  RegExp,
+  RecordKeyNumeric,
+  RecordKeyString,
+  String,
+  StringMinLength,
+  StringMaxLength,
+  StringPattern,
   StringFormatUnknown,
   StringFormat,
-  StringMaxLength,
-  StringMinLength,
-  StringPattern,
-  String,
   Symbol,
+  TupleZeroLength,
   TupleLength,
-  Tuple,
-  Uint8ArrayMaxByteLength,
-  Uint8ArrayMinByteLength,
-  Uint8Array,
   Undefined,
   Union,
+  Uint8Array,
+  Uint8ArrayMinByteLength,
+  Uint8ArrayMaxByteLength,
   Void,
+  Kind,
 }
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // ValueError
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------
 export interface ValueError {
   type: ValueErrorType
-  schema: TSchema
+  schema: Types.TSchema
   path: string
   value: unknown
   message: string
-  errors: ValueErrorIterator[]
 }
-// ------------------------------------------------------------------
-// ValueErrors
-// ------------------------------------------------------------------
-export class ValueErrorsUnknownTypeError extends TypeBoxError {
-  constructor(public readonly schema: TSchema) {
-    super('Unknown type')
-  }
-}
-// ------------------------------------------------------------------
-// EscapeKey
-// ------------------------------------------------------------------
-function EscapeKey(key: string): string {
-  return key.replace(/~/g, '~0').replace(/\//g, '~1') // RFC6901 Path
-}
-// ------------------------------------------------------------------
-// Guards
-// ------------------------------------------------------------------
-function IsDefined<T>(value: unknown): value is T {
-  return value !== undefined
-}
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // ValueErrorIterator
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------
 export class ValueErrorIterator {
   constructor(private readonly iterator: IterableIterator<ValueError>) {}
   public [Symbol.iterator]() {
@@ -206,320 +125,374 @@ export class ValueErrorIterator {
   }
 }
 // --------------------------------------------------------------------------
-// Create
+// ValueErrors
 // --------------------------------------------------------------------------
-function Create(errorType: ValueErrorType, schema: TSchema, path: string, value: unknown, errors: ValueErrorIterator[] = []): ValueError {
-  return {
-    type: errorType,
-    schema,
-    path,
-    value,
-    message: GetErrorFunction()({ errorType, path, schema, value, errors }),
-    errors,
+export class ValueErrorsUnknownTypeError extends Error {
+  constructor(public readonly schema: Types.TSchema) {
+    super('ValueErrors: Unknown type')
   }
+}
+export class ValueErrorsDereferenceError extends Error {
+  constructor(public readonly schema: Types.TRef | Types.TThis) {
+    super(`ValueErrors: Unable to dereference type with $id '${schema.$ref}'`)
+  }
+}
+// --------------------------------------------------------------------------
+// Guards
+// --------------------------------------------------------------------------
+function IsDefined<T>(value: unknown): value is T {
+  return value !== undefined
+}
+// --------------------------------------------------------------------------
+// Policies
+// --------------------------------------------------------------------------
+function IsExactOptionalProperty(value: Record<keyof any, unknown>, key: string) {
+  return TypeSystem.ExactOptionalPropertyTypes ? key in value : value[key] !== undefined
+}
+function IsObject(value: unknown): value is Record<keyof any, unknown> {
+  const isObject = ValueGuard.IsObject(value)
+  return TypeSystem.AllowArrayObjects ? isObject : isObject && !ValueGuard.IsArray(value)
+}
+function IsRecordObject(value: unknown): value is Record<keyof any, unknown> {
+  return IsObject(value) && !(value instanceof Date) && !(value instanceof Uint8Array)
+}
+function IsNumber(value: unknown): value is number {
+  const isNumber = ValueGuard.IsNumber(value)
+  return TypeSystem.AllowNaN ? isNumber : isNumber && Number.isFinite(value)
+}
+function IsVoid(value: unknown): value is void {
+  const isUndefined = ValueGuard.IsUndefined(value)
+  return TypeSystem.AllowVoidNull ? isUndefined || value === null : isUndefined
 }
 // --------------------------------------------------------------------------
 // Types
 // --------------------------------------------------------------------------
-function* FromAny(schema: TAny, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {}
-function* FromArgument(schema: TAny, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {}
-function* FromArray(schema: TArray, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsArray(value)) {
-    return yield Create(ValueErrorType.Array, schema, path, value)
+function* TAny(schema: Types.TAny, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {}
+function* TArray(schema: Types.TArray, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsArray(value)) {
+    return yield { type: ValueErrorType.Array, schema, path, value, message: `Expected array` }
   }
   if (IsDefined<number>(schema.minItems) && !(value.length >= schema.minItems)) {
-    yield Create(ValueErrorType.ArrayMinItems, schema, path, value)
+    yield { type: ValueErrorType.ArrayMinItems, schema, path, value, message: `Expected array length to be greater or equal to ${schema.minItems}` }
   }
   if (IsDefined<number>(schema.maxItems) && !(value.length <= schema.maxItems)) {
-    yield Create(ValueErrorType.ArrayMaxItems, schema, path, value)
+    yield { type: ValueErrorType.ArrayMinItems, schema, path, value, message: `Expected array length to be less or equal to ${schema.maxItems}` }
   }
+
   for (let i = 0; i < value.length; i++) {
     yield* Visit(schema.items, references, `${path}/${i}`, value[i])
   }
   // prettier-ignore
-  if (schema.uniqueItems === true && !((function () { const set = new Set(); for (const element of value) { const hashed = Hash(element); if (set.has(hashed)) { return false } else { set.add(hashed) } } return true })())) {
-    yield Create(ValueErrorType.ArrayUniqueItems, schema, path, value)
+  if (schema.uniqueItems === true && !((function () { const set = new Set(); for (const element of value) { const hashed = ValueHash.Hash(element); if (set.has(hashed)) { return false } else { set.add(hashed) } } return true })())) {
+    yield { type: ValueErrorType.ArrayUniqueItems, schema, path, value, message: `Expected array elements to be unique` }
   }
   // contains
-  if (!(IsDefined(schema.contains) || IsDefined(schema.minContains) || IsDefined(schema.maxContains))) {
+  if (!(IsDefined(schema.contains) || IsNumber(schema.minContains) || IsNumber(schema.maxContains))) {
     return
   }
-  const containsSchema = IsDefined<TSchema>(schema.contains) ? schema.contains : Never()
+  const containsSchema = IsDefined<Types.TSchema>(schema.contains) ? schema.contains : Types.Type.Never()
   const containsCount = value.reduce((acc: number, value, index) => (Visit(containsSchema, references, `${path}${index}`, value).next().done === true ? acc + 1 : acc), 0)
   if (containsCount === 0) {
-    yield Create(ValueErrorType.ArrayContains, schema, path, value)
+    yield { type: ValueErrorType.ArrayContains, schema, path, value, message: `Expected array to contain at least one matching type` }
   }
-  if (IsNumber(schema.minContains) && containsCount < schema.minContains) {
-    yield Create(ValueErrorType.ArrayMinContains, schema, path, value)
+  if (ValueGuard.IsNumber(schema.minContains) && containsCount < schema.minContains) {
+    yield { type: ValueErrorType.ArrayMinContains, schema, path, value, message: `Expected array to contain at least ${schema.minContains} matching types` }
   }
-  if (IsNumber(schema.maxContains) && containsCount > schema.maxContains) {
-    yield Create(ValueErrorType.ArrayMaxContains, schema, path, value)
+  if (ValueGuard.IsNumber(schema.maxContains) && containsCount > schema.maxContains) {
+    yield { type: ValueErrorType.ArrayMaxContains, schema, path, value, message: `Expected array to contain no more than ${schema.maxContains} matching types` }
   }
 }
-function* FromAsyncIterator(schema: TAsyncIterator, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsAsyncIterator(value)) yield Create(ValueErrorType.AsyncIterator, schema, path, value)
+function* TAsyncIterator(schema: Types.TAsyncIterator, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsAsyncIterator(value)) {
+    yield { type: ValueErrorType.AsyncIterator, schema, path, value, message: `Expected value to be an async iterator` }
+  }
 }
-function* FromBigInt(schema: TBigInt, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsBigInt(value)) return yield Create(ValueErrorType.BigInt, schema, path, value)
-  if (IsDefined<bigint>(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
-    yield Create(ValueErrorType.BigIntExclusiveMaximum, schema, path, value)
-  }
-  if (IsDefined<bigint>(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
-    yield Create(ValueErrorType.BigIntExclusiveMinimum, schema, path, value)
-  }
-  if (IsDefined<bigint>(schema.maximum) && !(value <= schema.maximum)) {
-    yield Create(ValueErrorType.BigIntMaximum, schema, path, value)
-  }
-  if (IsDefined<bigint>(schema.minimum) && !(value >= schema.minimum)) {
-    yield Create(ValueErrorType.BigIntMinimum, schema, path, value)
+function* TBigInt(schema: Types.TBigInt, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsBigInt(value)) {
+    return yield { type: ValueErrorType.BigInt, schema, path, value, message: `Expected bigint` }
   }
   if (IsDefined<bigint>(schema.multipleOf) && !(value % schema.multipleOf === BigInt(0))) {
-    yield Create(ValueErrorType.BigIntMultipleOf, schema, path, value)
+    yield { type: ValueErrorType.BigIntMultipleOf, schema, path, value, message: `Expected bigint to be a multiple of ${schema.multipleOf}` }
+  }
+  if (IsDefined<bigint>(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    yield { type: ValueErrorType.BigIntExclusiveMinimum, schema, path, value, message: `Expected bigint to be greater than ${schema.exclusiveMinimum}` }
+  }
+  if (IsDefined<bigint>(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    yield { type: ValueErrorType.BigIntExclusiveMaximum, schema, path, value, message: `Expected bigint to be less than ${schema.exclusiveMaximum}` }
+  }
+  if (IsDefined<bigint>(schema.minimum) && !(value >= schema.minimum)) {
+    yield { type: ValueErrorType.BigIntMinimum, schema, path, value, message: `Expected bigint to be greater or equal to ${schema.minimum}` }
+  }
+  if (IsDefined<bigint>(schema.maximum) && !(value <= schema.maximum)) {
+    yield { type: ValueErrorType.BigIntMaximum, schema, path, value, message: `Expected bigint to be less or equal to ${schema.maximum}` }
   }
 }
-function* FromBoolean(schema: TBoolean, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsBoolean(value)) yield Create(ValueErrorType.Boolean, schema, path, value)
+function* TBoolean(schema: Types.TBoolean, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsBoolean(value)) {
+    return yield { type: ValueErrorType.Boolean, schema, path, value, message: `Expected boolean` }
+  }
 }
-function* FromConstructor(schema: TConstructor, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
+function* TConstructor(schema: Types.TConstructor, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
   yield* Visit(schema.returns, references, path, value.prototype)
 }
-function* FromDate(schema: TDate, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsDate(value)) return yield Create(ValueErrorType.Date, schema, path, value)
-  if (IsDefined<number>(schema.exclusiveMaximumTimestamp) && !(value.getTime() < schema.exclusiveMaximumTimestamp)) {
-    yield Create(ValueErrorType.DateExclusiveMaximumTimestamp, schema, path, value)
+function* TDate(schema: Types.TDate, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsDate(value)) {
+    return yield { type: ValueErrorType.Date, schema, path, value, message: `Expected Date object` }
+  }
+  if (!isFinite(value.getTime())) {
+    return yield { type: ValueErrorType.Date, schema, path, value, message: `Invalid Date` }
   }
   if (IsDefined<number>(schema.exclusiveMinimumTimestamp) && !(value.getTime() > schema.exclusiveMinimumTimestamp)) {
-    yield Create(ValueErrorType.DateExclusiveMinimumTimestamp, schema, path, value)
+    yield { type: ValueErrorType.DateExclusiveMinimumTimestamp, schema, path, value, message: `Expected Date timestamp to be greater than ${schema.exclusiveMinimum}` }
   }
-  if (IsDefined<number>(schema.maximumTimestamp) && !(value.getTime() <= schema.maximumTimestamp)) {
-    yield Create(ValueErrorType.DateMaximumTimestamp, schema, path, value)
+  if (IsDefined<number>(schema.exclusiveMaximumTimestamp) && !(value.getTime() < schema.exclusiveMaximumTimestamp)) {
+    yield { type: ValueErrorType.DateExclusiveMaximumTimestamp, schema, path, value, message: `Expected Date timestamp to be less than ${schema.exclusiveMaximum}` }
   }
   if (IsDefined<number>(schema.minimumTimestamp) && !(value.getTime() >= schema.minimumTimestamp)) {
-    yield Create(ValueErrorType.DateMinimumTimestamp, schema, path, value)
+    yield { type: ValueErrorType.DateMinimumTimestamp, schema, path, value, message: `Expected Date timestamp to be greater or equal to ${schema.minimum}` }
   }
-  if (IsDefined<number>(schema.multipleOfTimestamp) && !(value.getTime() % schema.multipleOfTimestamp === 0)) {
-    yield Create(ValueErrorType.DateMultipleOfTimestamp, schema, path, value)
+  if (IsDefined<number>(schema.maximumTimestamp) && !(value.getTime() <= schema.maximumTimestamp)) {
+    yield { type: ValueErrorType.DateMaximumTimestamp, schema, path, value, message: `Expected Date timestamp to be less or equal to ${schema.maximum}` }
   }
 }
-function* FromFunction(schema: TFunction, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsFunction(value)) yield Create(ValueErrorType.Function, schema, path, value)
+function* TFunction(schema: Types.TFunction, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsFunction(value)) {
+    return yield { type: ValueErrorType.Function, schema, path, value, message: `Expected function` }
+  }
 }
-function* FromImport(schema: TImport, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  const definitions = globalThis.Object.values(schema.$defs) as TSchema[]
-  const target = schema.$defs[schema.$ref] as TSchema
-  yield* Visit(target, [...references, ...definitions], path, value)
-}
-function* FromInteger(schema: TInteger, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsInteger(value)) return yield Create(ValueErrorType.Integer, schema, path, value)
-  if (IsDefined<number>(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
-    yield Create(ValueErrorType.IntegerExclusiveMaximum, schema, path, value)
-  }
-  if (IsDefined<number>(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
-    yield Create(ValueErrorType.IntegerExclusiveMinimum, schema, path, value)
-  }
-  if (IsDefined<number>(schema.maximum) && !(value <= schema.maximum)) {
-    yield Create(ValueErrorType.IntegerMaximum, schema, path, value)
-  }
-  if (IsDefined<number>(schema.minimum) && !(value >= schema.minimum)) {
-    yield Create(ValueErrorType.IntegerMinimum, schema, path, value)
+function* TInteger(schema: Types.TInteger, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsInteger(value)) {
+    return yield { type: ValueErrorType.Integer, schema, path, value, message: `Expected integer` }
   }
   if (IsDefined<number>(schema.multipleOf) && !(value % schema.multipleOf === 0)) {
-    yield Create(ValueErrorType.IntegerMultipleOf, schema, path, value)
+    yield { type: ValueErrorType.IntegerMultipleOf, schema, path, value, message: `Expected integer to be a multiple of ${schema.multipleOf}` }
+  }
+  if (IsDefined<number>(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    yield { type: ValueErrorType.IntegerExclusiveMinimum, schema, path, value, message: `Expected integer to be greater than ${schema.exclusiveMinimum}` }
+  }
+  if (IsDefined<number>(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    yield { type: ValueErrorType.IntegerExclusiveMaximum, schema, path, value, message: `Expected integer to be less than ${schema.exclusiveMaximum}` }
+  }
+  if (IsDefined<number>(schema.minimum) && !(value >= schema.minimum)) {
+    yield { type: ValueErrorType.IntegerMinimum, schema, path, value, message: `Expected integer to be greater or equal to ${schema.minimum}` }
+  }
+  if (IsDefined<number>(schema.maximum) && !(value <= schema.maximum)) {
+    yield { type: ValueErrorType.IntegerMaximum, schema, path, value, message: `Expected integer to be less or equal to ${schema.maximum}` }
   }
 }
-function* FromIntersect(schema: TIntersect, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  let hasError = false
+function* TIntersect(schema: Types.TIntersect, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
   for (const inner of schema.allOf) {
-    for (const error of Visit(inner, references, path, value)) {
-      hasError = true
-      yield error
+    const next = Visit(inner, references, path, value).next()
+    if (!next.done) {
+      yield next.value
+      yield { type: ValueErrorType.Intersect, schema, path, value, message: `Expected all sub schemas to be valid` }
+      return
     }
   }
-  if (hasError) {
-    return yield Create(ValueErrorType.Intersect, schema, path, value)
-  }
   if (schema.unevaluatedProperties === false) {
-    const keyCheck = new RegExp(KeyOfPattern(schema))
+    const keyCheck = new RegExp(Types.KeyResolver.ResolvePattern(schema))
     for (const valueKey of Object.getOwnPropertyNames(value)) {
       if (!keyCheck.test(valueKey)) {
-        yield Create(ValueErrorType.IntersectUnevaluatedProperties, schema, `${path}/${valueKey}`, value)
+        yield { type: ValueErrorType.IntersectUnevaluatedProperties, schema, path: `${path}/${valueKey}`, value, message: `Unexpected property` }
       }
     }
   }
   if (typeof schema.unevaluatedProperties === 'object') {
-    const keyCheck = new RegExp(KeyOfPattern(schema))
+    const keyCheck = new RegExp(Types.KeyResolver.ResolvePattern(schema))
     for (const valueKey of Object.getOwnPropertyNames(value)) {
       if (!keyCheck.test(valueKey)) {
         const next = Visit(schema.unevaluatedProperties, references, `${path}/${valueKey}`, value[valueKey]).next()
-        if (!next.done) yield next.value // yield interior
+        if (!next.done) {
+          yield next.value
+          yield { type: ValueErrorType.IntersectUnevaluatedProperties, schema, path: `${path}/${valueKey}`, value, message: `Invalid additional property` }
+          return
+        }
       }
     }
   }
 }
-function* FromIterator(schema: TIterator, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsIterator(value)) yield Create(ValueErrorType.Iterator, schema, path, value)
-}
-function* FromLiteral(schema: TLiteral, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!(value === schema.const)) yield Create(ValueErrorType.Literal, schema, path, value)
-}
-function* FromNever(schema: TNever, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  yield Create(ValueErrorType.Never, schema, path, value)
-}
-function* FromNot(schema: TNot, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (Visit(schema.not, references, path, value).next().done === true) yield Create(ValueErrorType.Not, schema, path, value)
-}
-function* FromNull(schema: TNull, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsNull(value)) yield Create(ValueErrorType.Null, schema, path, value)
-}
-function* FromNumber(schema: TNumber, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!TypeSystemPolicy.IsNumberLike(value)) return yield Create(ValueErrorType.Number, schema, path, value)
-  if (IsDefined<number>(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
-    yield Create(ValueErrorType.NumberExclusiveMaximum, schema, path, value)
+function* TIterator(schema: Types.TIterator, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!(IsObject(value) && Symbol.iterator in value)) {
+    yield { type: ValueErrorType.Iterator, schema, path, value, message: `Expected value to be an iterator` }
   }
-  if (IsDefined<number>(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
-    yield Create(ValueErrorType.NumberExclusiveMinimum, schema, path, value)
+}
+function* TLiteral(schema: Types.TLiteral, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!(value === schema.const)) {
+    const error = typeof schema.const === 'string' ? `'${schema.const}'` : schema.const
+    return yield { type: ValueErrorType.Literal, schema, path, value, message: `Expected ${error}` }
   }
-  if (IsDefined<number>(schema.maximum) && !(value <= schema.maximum)) {
-    yield Create(ValueErrorType.NumberMaximum, schema, path, value)
+}
+function* TNever(schema: Types.TNever, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  yield { type: ValueErrorType.Never, schema, path, value, message: `Value cannot be validated` }
+}
+function* TNot(schema: Types.TNot, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (Visit(schema.not, references, path, value).next().done === true) {
+    yield { type: ValueErrorType.Not, schema, path, value, message: `Value should not validate` }
   }
-  if (IsDefined<number>(schema.minimum) && !(value >= schema.minimum)) {
-    yield Create(ValueErrorType.NumberMinimum, schema, path, value)
+}
+function* TNull(schema: Types.TNull, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsNull(value)) {
+    return yield { type: ValueErrorType.Null, schema, path, value, message: `Expected null` }
+  }
+}
+function* TNumber(schema: Types.TNumber, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!IsNumber(value)) {
+    return yield { type: ValueErrorType.Number, schema, path, value, message: `Expected number` }
   }
   if (IsDefined<number>(schema.multipleOf) && !(value % schema.multipleOf === 0)) {
-    yield Create(ValueErrorType.NumberMultipleOf, schema, path, value)
+    yield { type: ValueErrorType.NumberMultipleOf, schema, path, value, message: `Expected number to be a multiple of ${schema.multipleOf}` }
+  }
+  if (IsDefined<number>(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    yield { type: ValueErrorType.NumberExclusiveMinimum, schema, path, value, message: `Expected number to be greater than ${schema.exclusiveMinimum}` }
+  }
+  if (IsDefined<number>(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    yield { type: ValueErrorType.NumberExclusiveMaximum, schema, path, value, message: `Expected number to be less than ${schema.exclusiveMaximum}` }
+  }
+  if (IsDefined<number>(schema.minimum) && !(value >= schema.minimum)) {
+    yield { type: ValueErrorType.NumberMinimum, schema, path, value, message: `Expected number to be greater or equal to ${schema.minimum}` }
+  }
+  if (IsDefined<number>(schema.maximum) && !(value <= schema.maximum)) {
+    yield { type: ValueErrorType.NumberMaximum, schema, path, value, message: `Expected number to be less or equal to ${schema.maximum}` }
   }
 }
-function* FromObject(schema: TObject, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!TypeSystemPolicy.IsObjectLike(value)) return yield Create(ValueErrorType.Object, schema, path, value)
+function* TObject(schema: Types.TObject, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!IsObject(value)) {
+    return yield { type: ValueErrorType.Object, schema, path, value, message: `Expected object` }
+  }
   if (IsDefined<number>(schema.minProperties) && !(Object.getOwnPropertyNames(value).length >= schema.minProperties)) {
-    yield Create(ValueErrorType.ObjectMinProperties, schema, path, value)
+    yield { type: ValueErrorType.ObjectMinProperties, schema, path, value, message: `Expected object to have at least ${schema.minProperties} properties` }
   }
   if (IsDefined<number>(schema.maxProperties) && !(Object.getOwnPropertyNames(value).length <= schema.maxProperties)) {
-    yield Create(ValueErrorType.ObjectMaxProperties, schema, path, value)
+    yield { type: ValueErrorType.ObjectMaxProperties, schema, path, value, message: `Expected object to have no more than ${schema.maxProperties} properties` }
   }
   const requiredKeys = Array.isArray(schema.required) ? schema.required : ([] as string[])
   const knownKeys = Object.getOwnPropertyNames(schema.properties)
   const unknownKeys = Object.getOwnPropertyNames(value)
+  for (const knownKey of knownKeys) {
+    const property = schema.properties[knownKey]
+    if (schema.required && schema.required.includes(knownKey)) {
+      yield* Visit(property, references, `${path}/${knownKey}`, value[knownKey])
+      if (Types.ExtendsUndefined.Check(schema) && !(knownKey in value)) {
+        yield { type: ValueErrorType.ObjectRequiredProperties, schema: property, path: `${path}/${knownKey}`, value: undefined, message: `Expected required property` }
+      }
+    } else {
+      if (IsExactOptionalProperty(value, knownKey)) {
+        yield* Visit(property, references, `${path}/${knownKey}`, value[knownKey])
+      }
+    }
+  }
   for (const requiredKey of requiredKeys) {
     if (unknownKeys.includes(requiredKey)) continue
-    yield Create(ValueErrorType.ObjectRequiredProperty, schema.properties[requiredKey], `${path}/${EscapeKey(requiredKey)}`, undefined)
+    yield { type: ValueErrorType.ObjectRequiredProperties, schema: schema.properties[requiredKey], path: `${path}/${requiredKey}`, value: undefined, message: `Expected required property` }
   }
   if (schema.additionalProperties === false) {
     for (const valueKey of unknownKeys) {
       if (!knownKeys.includes(valueKey)) {
-        yield Create(ValueErrorType.ObjectAdditionalProperties, schema, `${path}/${EscapeKey(valueKey)}`, value[valueKey])
+        yield { type: ValueErrorType.ObjectAdditionalProperties, schema, path: `${path}/${valueKey}`, value: value[valueKey], message: `Unexpected property` }
       }
     }
   }
   if (typeof schema.additionalProperties === 'object') {
     for (const valueKey of unknownKeys) {
       if (knownKeys.includes(valueKey)) continue
-      yield* Visit(schema.additionalProperties as TSchema, references, `${path}/${EscapeKey(valueKey)}`, value[valueKey])
-    }
-  }
-  for (const knownKey of knownKeys) {
-    const property = schema.properties[knownKey]
-    if (schema.required && schema.required.includes(knownKey)) {
-      yield* Visit(property, references, `${path}/${EscapeKey(knownKey)}`, value[knownKey])
-      if (ExtendsUndefinedCheck(schema) && !(knownKey in value)) {
-        yield Create(ValueErrorType.ObjectRequiredProperty, property, `${path}/${EscapeKey(knownKey)}`, undefined)
-      }
-    } else {
-      if (TypeSystemPolicy.IsExactOptionalProperty(value, knownKey)) {
-        yield* Visit(property, references, `${path}/${EscapeKey(knownKey)}`, value[knownKey])
-      }
+      yield* Visit(schema.additionalProperties as Types.TSchema, references, `${path}/${valueKey}`, value[valueKey])
     }
   }
 }
-function* FromPromise(schema: TPromise, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsPromise(value)) yield Create(ValueErrorType.Promise, schema, path, value)
+function* TPromise(schema: Types.TPromise, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsPromise(value)) {
+    yield { type: ValueErrorType.Promise, schema, path, value, message: `Expected Promise` }
+  }
 }
-function* FromRecord(schema: TRecord, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!TypeSystemPolicy.IsRecordLike(value)) return yield Create(ValueErrorType.Object, schema, path, value)
+function* TRecord(schema: Types.TRecord, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!IsRecordObject(value)) {
+    return yield { type: ValueErrorType.Object, schema, path, value, message: `Expected record object` }
+  }
   if (IsDefined<number>(schema.minProperties) && !(Object.getOwnPropertyNames(value).length >= schema.minProperties)) {
-    yield Create(ValueErrorType.ObjectMinProperties, schema, path, value)
+    yield { type: ValueErrorType.ObjectMinProperties, schema, path, value, message: `Expected object to have at least ${schema.minProperties} properties` }
   }
   if (IsDefined<number>(schema.maxProperties) && !(Object.getOwnPropertyNames(value).length <= schema.maxProperties)) {
-    yield Create(ValueErrorType.ObjectMaxProperties, schema, path, value)
+    yield { type: ValueErrorType.ObjectMaxProperties, schema, path, value, message: `Expected object to have no more than ${schema.maxProperties} properties` }
   }
   const [patternKey, patternSchema] = Object.entries(schema.patternProperties)[0]
   const regex = new RegExp(patternKey)
   for (const [propertyKey, propertyValue] of Object.entries(value)) {
-    if (regex.test(propertyKey)) yield* Visit(patternSchema, references, `${path}/${EscapeKey(propertyKey)}`, propertyValue)
-  }
-  if (typeof schema.additionalProperties === 'object') {
-    for (const [propertyKey, propertyValue] of Object.entries(value)) {
-      if (!regex.test(propertyKey)) yield* Visit(schema.additionalProperties as TSchema, references, `${path}/${EscapeKey(propertyKey)}`, propertyValue)
+    if (regex.test(propertyKey)) {
+      yield* Visit(patternSchema, references, `${path}/${propertyKey}`, propertyValue)
+      continue
+    }
+    if (typeof schema.additionalProperties === 'object') {
+      yield* Visit(schema.additionalProperties, references, `${path}/${propertyKey}`, propertyValue)
+    }
+    if (schema.additionalProperties === false) {
+      const propertyPath = `${path}/${propertyKey}`
+      const message = `Unexpected property '${propertyPath}'`
+      return yield { type: ValueErrorType.ObjectAdditionalProperties, schema, path: propertyPath, value: propertyValue, message }
     }
   }
-  if (schema.additionalProperties === false) {
-    for (const [propertyKey, propertyValue] of Object.entries(value)) {
-      if (regex.test(propertyKey)) continue
-      return yield Create(ValueErrorType.ObjectAdditionalProperties, schema, `${path}/${EscapeKey(propertyKey)}`, propertyValue)
-    }
+}
+function* TRef(schema: Types.TRef<any>, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  const index = references.findIndex((foreign) => foreign.$id === schema.$ref)
+  if (index === -1) throw new ValueErrorsDereferenceError(schema)
+  const target = references[index]
+  yield* Visit(target, references, path, value)
+}
+function* TString(schema: Types.TString, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsString(value)) {
+    return yield { type: ValueErrorType.String, schema, path, value, message: 'Expected string' }
   }
-}
-function* FromRef(schema: TRef, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  yield* Visit(Deref(schema, references), references, path, value)
-}
-function* FromRegExp(schema: TRegExp, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsString(value)) return yield Create(ValueErrorType.String, schema, path, value)
   if (IsDefined<number>(schema.minLength) && !(value.length >= schema.minLength)) {
-    yield Create(ValueErrorType.StringMinLength, schema, path, value)
+    yield { type: ValueErrorType.StringMinLength, schema, path, value, message: `Expected string length greater or equal to ${schema.minLength}` }
   }
   if (IsDefined<number>(schema.maxLength) && !(value.length <= schema.maxLength)) {
-    yield Create(ValueErrorType.StringMaxLength, schema, path, value)
+    yield { type: ValueErrorType.StringMaxLength, schema, path, value, message: `Expected string length less or equal to ${schema.maxLength}` }
   }
-  const regex = new RegExp(schema.source, schema.flags)
-  if (!regex.test(value)) {
-    return yield Create(ValueErrorType.RegExp, schema, path, value)
-  }
-}
-function* FromString(schema: TString, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsString(value)) return yield Create(ValueErrorType.String, schema, path, value)
-  if (IsDefined<number>(schema.minLength) && !(value.length >= schema.minLength)) {
-    yield Create(ValueErrorType.StringMinLength, schema, path, value)
-  }
-  if (IsDefined<number>(schema.maxLength) && !(value.length <= schema.maxLength)) {
-    yield Create(ValueErrorType.StringMaxLength, schema, path, value)
-  }
-  if (IsString(schema.pattern)) {
+  if (ValueGuard.IsString(schema.pattern)) {
     const regex = new RegExp(schema.pattern)
     if (!regex.test(value)) {
-      yield Create(ValueErrorType.StringPattern, schema, path, value)
+      yield { type: ValueErrorType.StringPattern, schema, path, value, message: `Expected string to match pattern ${schema.pattern}` }
     }
   }
-  if (IsString(schema.format)) {
-    if (!FormatRegistry.Has(schema.format)) {
-      yield Create(ValueErrorType.StringFormatUnknown, schema, path, value)
+  if (ValueGuard.IsString(schema.format)) {
+    if (!Types.FormatRegistry.Has(schema.format)) {
+      yield { type: ValueErrorType.StringFormatUnknown, schema, path, value, message: `Unknown string format '${schema.format}'` }
     } else {
-      const format = FormatRegistry.Get(schema.format)!
+      const format = Types.FormatRegistry.Get(schema.format)!
       if (!format(value)) {
-        yield Create(ValueErrorType.StringFormat, schema, path, value)
+        yield { type: ValueErrorType.StringFormat, schema, path, value, message: `Expected string to match format '${schema.format}'` }
       }
     }
   }
 }
-function* FromSymbol(schema: TSymbol, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsSymbol(value)) yield Create(ValueErrorType.Symbol, schema, path, value)
+function* TSymbol(schema: Types.TSymbol, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsSymbol(value)) {
+    return yield { type: ValueErrorType.Symbol, schema, path, value, message: 'Expected symbol' }
+  }
 }
-function* FromTemplateLiteral(schema: TTemplateLiteral, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsString(value)) return yield Create(ValueErrorType.String, schema, path, value)
+function* TTemplateLiteral(schema: Types.TTemplateLiteral, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsString(value)) {
+    return yield { type: ValueErrorType.String, schema, path, value, message: 'Expected string' }
+  }
   const regex = new RegExp(schema.pattern)
   if (!regex.test(value)) {
-    yield Create(ValueErrorType.StringPattern, schema, path, value)
+    yield { type: ValueErrorType.StringPattern, schema, path, value, message: `Expected string to match pattern ${schema.pattern}` }
   }
 }
-function* FromThis(schema: TThis, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  yield* Visit(Deref(schema, references), references, path, value)
+function* TThis(schema: Types.TThis, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  const index = references.findIndex((foreign) => foreign.$id === schema.$ref)
+  if (index === -1) throw new ValueErrorsDereferenceError(schema)
+  const target = references[index]
+  yield* Visit(target, references, path, value)
 }
-function* FromTuple(schema: TTuple<any[]>, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsArray(value)) return yield Create(ValueErrorType.Tuple, schema, path, value)
+function* TTuple(schema: Types.TTuple<any[]>, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsArray(value)) {
+    return yield { type: ValueErrorType.Array, schema, path, value, message: 'Expected Array' }
+  }
   if (schema.items === undefined && !(value.length === 0)) {
-    return yield Create(ValueErrorType.TupleLength, schema, path, value)
+    return yield { type: ValueErrorType.TupleZeroLength, schema, path, value, message: 'Expected tuple to have 0 elements' }
   }
   if (!(value.length === schema.maxItems)) {
-    return yield Create(ValueErrorType.TupleLength, schema, path, value)
+    yield { type: ValueErrorType.TupleLength, schema, path, value, message: `Expected tuple to have ${schema.maxItems} elements` }
   }
   if (!schema.items) {
     return
@@ -528,110 +501,121 @@ function* FromTuple(schema: TTuple<any[]>, references: TSchema[], path: string, 
     yield* Visit(schema.items[i], references, `${path}/${i}`, value[i])
   }
 }
-function* FromUndefined(schema: TUndefined, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsUndefined(value)) yield Create(ValueErrorType.Undefined, schema, path, value)
+function* TUndefined(schema: Types.TUndefined, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!(value === undefined)) {
+    yield { type: ValueErrorType.Undefined, schema, path, value, message: `Expected undefined` }
+  }
 }
-function* FromUnion(schema: TUnion, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (Check(schema, references, value)) return
-  const errors = schema.anyOf.map((variant) => new ValueErrorIterator(Visit(variant, references, path, value)))
-  yield Create(ValueErrorType.Union, schema, path, value, errors)
+function* TUnion(schema: Types.TUnion, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  const errors: ValueError[] = []
+  for (const inner of schema.anyOf) {
+    const variantErrors = [...Visit(inner, references, path, value)]
+    if (variantErrors.length === 0) return
+    errors.push(...variantErrors)
+  }
+  if (errors.length > 0) {
+    yield { type: ValueErrorType.Union, schema, path, value, message: 'Expected value of union' }
+  }
+  for (const error of errors) {
+    yield error
+  }
 }
-function* FromUint8Array(schema: TUint8Array, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!IsUint8Array(value)) return yield Create(ValueErrorType.Uint8Array, schema, path, value)
+function* TUint8Array(schema: Types.TUint8Array, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!ValueGuard.IsUint8Array(value)) {
+    return yield { type: ValueErrorType.Uint8Array, schema, path, value, message: `Expected Uint8Array` }
+  }
   if (IsDefined<number>(schema.maxByteLength) && !(value.length <= schema.maxByteLength)) {
-    yield Create(ValueErrorType.Uint8ArrayMaxByteLength, schema, path, value)
+    yield { type: ValueErrorType.Uint8ArrayMaxByteLength, schema, path, value, message: `Expected Uint8Array to have a byte length less or equal to ${schema.maxByteLength}` }
   }
   if (IsDefined<number>(schema.minByteLength) && !(value.length >= schema.minByteLength)) {
-    yield Create(ValueErrorType.Uint8ArrayMinByteLength, schema, path, value)
+    yield { type: ValueErrorType.Uint8ArrayMinByteLength, schema, path, value, message: `Expected Uint8Array to have a byte length greater or equal to ${schema.maxByteLength}` }
   }
 }
-function* FromUnknown(schema: TUnknown, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {}
-function* FromVoid(schema: TVoid, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  if (!TypeSystemPolicy.IsVoidLike(value)) yield Create(ValueErrorType.Void, schema, path, value)
+function* TUnknown(schema: Types.TUnknown, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {}
+function* TVoid(schema: Types.TVoid, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  if (!IsVoid(value)) {
+    return yield { type: ValueErrorType.Void, schema, path, value, message: `Expected void` }
+  }
 }
-function* FromKind(schema: TSchema, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
-  const check = TypeRegistry.Get(schema[Kind])!
-  if (!check(schema, value)) yield Create(ValueErrorType.Kind, schema, path, value)
+function* TKind(schema: Types.TSchema, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
+  const check = Types.TypeRegistry.Get(schema[Types.Kind])!
+  if (!check(schema, value)) {
+    return yield { type: ValueErrorType.Kind, schema, path, value, message: `Expected kind ${schema[Types.Kind]}` }
+  }
 }
-function* Visit<T extends TSchema>(schema: T, references: TSchema[], path: string, value: any): IterableIterator<ValueError> {
+function* Visit<T extends Types.TSchema>(schema: T, references: Types.TSchema[], path: string, value: any): IterableIterator<ValueError> {
   const references_ = IsDefined<string>(schema.$id) ? [...references, schema] : references
   const schema_ = schema as any
-  switch (schema_[Kind]) {
+  switch (schema_[Types.Kind]) {
     case 'Any':
-      return yield* FromAny(schema_, references_, path, value)
-    case 'Argument':
-      return yield* FromArgument(schema_, references_, path, value)
+      return yield* TAny(schema_, references_, path, value)
     case 'Array':
-      return yield* FromArray(schema_, references_, path, value)
+      return yield* TArray(schema_, references_, path, value)
     case 'AsyncIterator':
-      return yield* FromAsyncIterator(schema_, references_, path, value)
+      return yield* TAsyncIterator(schema_, references_, path, value)
     case 'BigInt':
-      return yield* FromBigInt(schema_, references_, path, value)
+      return yield* TBigInt(schema_, references_, path, value)
     case 'Boolean':
-      return yield* FromBoolean(schema_, references_, path, value)
+      return yield* TBoolean(schema_, references_, path, value)
     case 'Constructor':
-      return yield* FromConstructor(schema_, references_, path, value)
+      return yield* TConstructor(schema_, references_, path, value)
     case 'Date':
-      return yield* FromDate(schema_, references_, path, value)
+      return yield* TDate(schema_, references_, path, value)
     case 'Function':
-      return yield* FromFunction(schema_, references_, path, value)
-    case 'Import':
-      return yield* FromImport(schema_, references_, path, value)
+      return yield* TFunction(schema_, references_, path, value)
     case 'Integer':
-      return yield* FromInteger(schema_, references_, path, value)
+      return yield* TInteger(schema_, references_, path, value)
     case 'Intersect':
-      return yield* FromIntersect(schema_, references_, path, value)
+      return yield* TIntersect(schema_, references_, path, value)
     case 'Iterator':
-      return yield* FromIterator(schema_, references_, path, value)
+      return yield* TIterator(schema_, references_, path, value)
     case 'Literal':
-      return yield* FromLiteral(schema_, references_, path, value)
+      return yield* TLiteral(schema_, references_, path, value)
     case 'Never':
-      return yield* FromNever(schema_, references_, path, value)
+      return yield* TNever(schema_, references_, path, value)
     case 'Not':
-      return yield* FromNot(schema_, references_, path, value)
+      return yield* TNot(schema_, references_, path, value)
     case 'Null':
-      return yield* FromNull(schema_, references_, path, value)
+      return yield* TNull(schema_, references_, path, value)
     case 'Number':
-      return yield* FromNumber(schema_, references_, path, value)
+      return yield* TNumber(schema_, references_, path, value)
     case 'Object':
-      return yield* FromObject(schema_, references_, path, value)
+      return yield* TObject(schema_, references_, path, value)
     case 'Promise':
-      return yield* FromPromise(schema_, references_, path, value)
+      return yield* TPromise(schema_, references_, path, value)
     case 'Record':
-      return yield* FromRecord(schema_, references_, path, value)
+      return yield* TRecord(schema_, references_, path, value)
     case 'Ref':
-      return yield* FromRef(schema_, references_, path, value)
-    case 'RegExp':
-      return yield* FromRegExp(schema_, references_, path, value)
+      return yield* TRef(schema_, references_, path, value)
     case 'String':
-      return yield* FromString(schema_, references_, path, value)
+      return yield* TString(schema_, references_, path, value)
     case 'Symbol':
-      return yield* FromSymbol(schema_, references_, path, value)
+      return yield* TSymbol(schema_, references_, path, value)
     case 'TemplateLiteral':
-      return yield* FromTemplateLiteral(schema_, references_, path, value)
+      return yield* TTemplateLiteral(schema_, references_, path, value)
     case 'This':
-      return yield* FromThis(schema_, references_, path, value)
+      return yield* TThis(schema_, references_, path, value)
     case 'Tuple':
-      return yield* FromTuple(schema_, references_, path, value)
+      return yield* TTuple(schema_, references_, path, value)
     case 'Undefined':
-      return yield* FromUndefined(schema_, references_, path, value)
+      return yield* TUndefined(schema_, references_, path, value)
     case 'Union':
-      return yield* FromUnion(schema_, references_, path, value)
+      return yield* TUnion(schema_, references_, path, value)
     case 'Uint8Array':
-      return yield* FromUint8Array(schema_, references_, path, value)
+      return yield* TUint8Array(schema_, references_, path, value)
     case 'Unknown':
-      return yield* FromUnknown(schema_, references_, path, value)
+      return yield* TUnknown(schema_, references_, path, value)
     case 'Void':
-      return yield* FromVoid(schema_, references_, path, value)
+      return yield* TVoid(schema_, references_, path, value)
     default:
-      if (!TypeRegistry.Has(schema_[Kind])) throw new ValueErrorsUnknownTypeError(schema)
-      return yield* FromKind(schema_, references_, path, value)
+      if (!Types.TypeRegistry.Has(schema_[Types.Kind])) throw new ValueErrorsUnknownTypeError(schema)
+      return yield* TKind(schema_, references_, path, value)
   }
 }
 /** Returns an iterator for each error in this value. */
-export function Errors<T extends TSchema>(schema: T, references: TSchema[], value: unknown): ValueErrorIterator
+export function Errors<T extends Types.TSchema>(schema: T, references: Types.TSchema[], value: unknown): ValueErrorIterator
 /** Returns an iterator for each error in this value. */
-export function Errors<T extends TSchema>(schema: T, value: unknown): ValueErrorIterator
+export function Errors<T extends Types.TSchema>(schema: T, value: unknown): ValueErrorIterator
 /** Returns an iterator for each error in this value. */
 export function Errors(...args: any[]) {
   const iterator = args.length === 3 ? Visit(args[0], args[1], '', args[2]) : Visit(args[0], [], '', args[1])

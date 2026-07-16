@@ -9,7 +9,7 @@ import { Type, TSchema } from '@sinclair/typebox'
     C: Type.Optional(Type.String()),
     D: Type.String(),
   })
-  Expect(T).ToStatic<{
+  Expect(T).ToInfer<{
     readonly A?: string
     readonly B: string
     C?: string

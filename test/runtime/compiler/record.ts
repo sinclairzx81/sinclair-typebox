@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Record', () => {
+describe('type/compiler/Record', () => {
   // -------------------------------------------------------------
   // Issues
   // -------------------------------------------------------------
@@ -85,7 +85,7 @@ describe('compiler/Record', () => {
     const R = Type.Record(Type.KeyOf(T), Type.Number(), { additionalProperties: false })
     Fail(R, { a: 1, b: 2, c: 3, d: 4 })
   })
-  it('Should validate when specifying regular expressions', () => {
+  it('Should should validate when specifying regular expressions', () => {
     const K = Type.RegExp(/^op_.*$/)
     const T = Type.Record(K, Type.Number())
     Ok(T, {
@@ -94,31 +94,13 @@ describe('compiler/Record', () => {
       op_c: 3,
     })
   })
-  it('Should not validate when specifying regular expressions and passing invalid property', () => {
+  it('Should should not validate when specifying regular expressions and passing invalid property', () => {
     const K = Type.RegExp(/^op_.*$/)
     const T = Type.Record(K, Type.Number(), { additionalProperties: false })
     Fail(T, {
       op_a: 1,
       op_b: 2,
       aop_c: 3,
-    })
-  })
-  it('Should validate with quoted string pattern', () => {
-    const K = Type.String({ pattern: "'(a|b|c)" })
-    const T = Type.Record(K, Type.Number())
-    Ok(T, {
-      "'a": 1,
-      "'b": 2,
-      "'c": 3,
-    })
-  })
-  it('Should validate with forward-slash pattern', () => {
-    const K = Type.String({ pattern: '/(a|b|c)' })
-    const T = Type.Record(K, Type.Number())
-    Ok(T, {
-      '/a': 1,
-      '/b': 2,
-      '/c': 3,
     })
   })
   // ------------------------------------------------------------
@@ -205,120 +187,5 @@ describe('compiler/Record', () => {
   it('AdditionalProperties 5', () => {
     const T = Type.Record(Type.Number(), Type.String(), { additionalProperties: Type.Boolean() })
     Ok(T, { 1: '', 2: '', x: true })
-  })
-  // ----------------------------------------------------------------
-  // TemplateLiteral
-  // ----------------------------------------------------------------
-  it('TemplateLiteral 1', () => {
-    const K = Type.TemplateLiteral('key${number}')
-    const R = Type.Record(K, Type.Number(), { additionalProperties: false })
-    Ok(R, {
-      key0: 1,
-      key1: 1,
-      key2: 1,
-    })
-  })
-  it('TemplateLiteral 2', () => {
-    const K = Type.TemplateLiteral('key${number}')
-    const R = Type.Record(K, Type.Number())
-    Ok(R, { keyA: 0 })
-  })
-  it('TemplateLiteral 3', () => {
-    const K = Type.TemplateLiteral('key${number}')
-    const R = Type.Record(K, Type.Number(), { additionalProperties: false })
-    Fail(R, { keyA: 0 })
-  })
-  it('TemplateLiteral 4', () => {
-    const K = Type.TemplateLiteral('key${number}')
-    const R = Type.Record(K, Type.Number())
-    const T = Type.Object({ x: Type.Number(), y: Type.Number() })
-    const I = Type.Intersect([R, T], { unevaluatedProperties: false })
-    Ok(I, {
-      x: 1,
-      y: 2,
-      key0: 1,
-      key1: 1,
-      key2: 1,
-    })
-  })
-  it('TemplateLiteral 5', () => {
-    const K = Type.TemplateLiteral('key${number}')
-    const R = Type.Record(K, Type.Number())
-    const T = Type.Object({ x: Type.Number(), y: Type.Number() })
-    const I = Type.Intersect([R, T])
-    Ok(I, {
-      x: 1,
-      y: 2,
-      z: 3,
-      key0: 1,
-      key1: 1,
-      key2: 1,
-    })
-  })
-  it('TemplateLiteral 6', () => {
-    const K = Type.TemplateLiteral('key${number}')
-    const R = Type.Record(K, Type.Number())
-    const T = Type.Object({ x: Type.Number(), y: Type.Number() })
-    const I = Type.Intersect([R, T], { unevaluatedProperties: false })
-    Fail(I, {
-      x: 1,
-      y: 2,
-      z: 3,
-      key0: 1,
-      key1: 1,
-      key2: 1,
-    })
-  })
-  // ----------------------------------------------------------------
-  // https://github.com/sinclairzx81/typebox/issues/916
-  // ----------------------------------------------------------------
-  it('Should validate for string keys', () => {
-    const T = Type.Record(Type.String(), Type.Null(), {
-      additionalProperties: false,
-    })
-    Ok(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-  })
-  it('Should validate for number keys', () => {
-    const T = Type.Record(Type.Number(), Type.Null(), {
-      additionalProperties: false,
-    })
-    Fail(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-    Ok(T, {
-      0: null,
-      1: null,
-    })
-  })
-  it('Should validate for any keys', () => {
-    const T = Type.Record(Type.Any(), Type.Null(), {
-      additionalProperties: false,
-    })
-    Ok(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-  })
-  it('Should validate for never keys', () => {
-    const T = Type.Record(Type.Never(), Type.Null(), {
-      additionalProperties: false,
-    })
-    Ok(T, {})
-    Fail(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
   })
 })

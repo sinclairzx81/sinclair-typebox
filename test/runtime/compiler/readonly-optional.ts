@@ -2,7 +2,7 @@ import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 import { strictEqual } from 'assert'
 
-describe('compiler/ReadonlyOptional', () => {
+describe('type/compiler/ReadonlyOptional', () => {
   it('Should validate object with optional', () => {
     const T = Type.Object(
       {

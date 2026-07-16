@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Array', () => {
+describe('type/compiler/Array', () => {
   it('Should validate an array of any', () => {
     const T = Type.Array(Type.Any())
     Ok(T, [0, true, 'hello', {}])
@@ -144,58 +144,5 @@ describe('compiler/Array', () => {
     Fail(T, [1, 1, 1, 1])
     Fail(T, [1, 1, 1, 1, 1])
     Fail(T, [1, 1, 1, 1, 1, 1])
-  })
-  // ----------------------------------------------------------------
-  // Issue: https://github.com/sinclairzx81/typebox/discussions/607
-  // ----------------------------------------------------------------
-  it('Should correctly handle undefined array properties', () => {
-    const Answer = Type.Object({
-      text: Type.String(),
-      isCorrect: Type.Boolean(),
-    })
-    const Question = Type.Object({
-      text: Type.String(),
-      options: Type.Array(Answer, {
-        minContains: 1,
-        maxContains: 1,
-        contains: Type.Object({
-          text: Type.String(),
-          isCorrect: Type.Literal(true),
-        }),
-      }),
-    })
-    Fail(Question, { text: 'A' })
-    Fail(Question, { text: 'A', options: [] })
-    Ok(Question, { text: 'A', options: [{ text: 'A', isCorrect: true }] })
-    Ok(Question, {
-      text: 'A',
-      options: [
-        { text: 'A', isCorrect: true },
-        { text: 'B', isCorrect: false },
-      ],
-    })
-    Fail(Question, { text: 'A', options: [{ text: 'A', isCorrect: false }] })
-    Fail(Question, {
-      text: 'A',
-      options: [
-        { text: 'A', isCorrect: true },
-        { text: 'B', isCorrect: true },
-      ],
-    })
-  })
-  // ----------------------------------------------------------------
-  // Issue: https://github.com/sinclairzx81/typebox/issues/1519
-  // ----------------------------------------------------------------
-  it('Should correctly handle sparse arrays 1', () => {
-    const T = Type.Array(Type.String())
-    const V = []
-    V[10] = 'hello'
-    Fail(T, V)
-  })
-  it('Should correctly handle sparse arrays 2', () => {
-    const T = Type.Array(Type.Union([Type.String(), Type.Undefined()]))
-    const V = []
-    V[10] = 'hello'
-    Ok(T, V)
   })
 })

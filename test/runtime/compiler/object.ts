@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Object', () => {
+describe('type/compiler/Object', () => {
   // -----------------------------------------------------
   // TypeCompiler Only
   // -----------------------------------------------------

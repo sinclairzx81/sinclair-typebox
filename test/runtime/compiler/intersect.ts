@@ -1,7 +1,7 @@
-import { Type } from '@sinclair/typebox'
+import { Type, Static } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Intersect', () => {
+describe('type/compiler/Intersect', () => {
   it('Should intersect number and number', () => {
     const A = Type.Number()
     const B = Type.Number()

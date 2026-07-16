@@ -121,46 +121,6 @@ describe('value/check/Record', () => {
     const result = Value.Check(T, value)
     Assert.IsEqual(result, true)
   })
-  it('Should validate when specifying regular expressions', () => {
-    const K = Type.RegExp(/^op_.*$/)
-    const T = Type.Record(K, Type.Number())
-    const R = Value.Check(T, {
-      op_a: 1,
-      op_b: 2,
-      op_c: 3,
-    })
-    Assert.IsTrue(R)
-  })
-  it('Should not validate when specifying regular expressions and passing invalid property', () => {
-    const K = Type.RegExp(/^op_.*$/)
-    const T = Type.Record(K, Type.Number(), { additionalProperties: false })
-    const R = Value.Check(T, {
-      op_a: 1,
-      op_b: 2,
-      aop_c: 3,
-    })
-    Assert.IsFalse(R)
-  })
-  it('Should validate with quoted string pattern', () => {
-    const K = Type.String({ pattern: "'(a|b|c)" })
-    const T = Type.Record(K, Type.Number())
-    const R = Value.Check(T, {
-      "'a": 1,
-      "'b": 2,
-      "'c": 3,
-    })
-    Assert.IsTrue(R)
-  })
-  it('Should validate with forward-slash pattern', () => {
-    const K = Type.String({ pattern: '/(a|b|c)' })
-    const T = Type.Record(K, Type.Number())
-    const R = Value.Check(T, {
-      '/a': 1,
-      '/b': 2,
-      '/c': 3,
-    })
-    Assert.IsTrue(R)
-  })
   // -------------------------------------------------
   // Number Key
   // -------------------------------------------------
@@ -235,63 +195,5 @@ describe('value/check/Record', () => {
     const T = Type.Record(Type.Number(), Type.String(), { additionalProperties: Type.Boolean() })
     const R = Value.Check(T, { 1: '', 2: '', x: true })
     Assert.IsEqual(R, true)
-  })
-  // ----------------------------------------------------------------
-  // https://github.com/sinclairzx81/typebox/issues/916
-  // ----------------------------------------------------------------
-  it('Should validate for string keys', () => {
-    const T = Type.Record(Type.String(), Type.Null(), {
-      additionalProperties: false,
-    })
-    const R = Value.Check(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-    Assert.IsEqual(R, true)
-  })
-  it('Should validate for number keys', () => {
-    const T = Type.Record(Type.Number(), Type.Null(), {
-      additionalProperties: false,
-    })
-    const R1 = Value.Check(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-    const R2 = Value.Check(T, {
-      0: null,
-      1: null,
-    })
-    Assert.IsEqual(R1, false)
-    Assert.IsEqual(R2, true)
-  })
-  it('Should validate for any keys', () => {
-    const T = Type.Record(Type.Any(), Type.Null(), {
-      additionalProperties: false,
-    })
-    const R = Value.Check(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-    Assert.IsEqual(R, true)
-  })
-  it('Should validate for never keys', () => {
-    const T = Type.Record(Type.Never(), Type.Null(), {
-      additionalProperties: false,
-    })
-    const R1 = Value.Check(T, {})
-    const R2 = Value.Check(T, {
-      a: null,
-      b: null,
-      0: null,
-      1: null,
-    })
-    Assert.IsEqual(R1, true)
-    Assert.IsEqual(R2, false)
   })
 })

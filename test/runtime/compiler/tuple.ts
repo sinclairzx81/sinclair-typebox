@@ -1,7 +1,8 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
+import { Assert } from '../assert'
 
-describe('compiler/Tuple', () => {
+describe('type/compiler/Tuple', () => {
   it('Should validate tuple of [string, number]', () => {
     const A = Type.String()
     const B = Type.Number()

@@ -13,11 +13,4 @@ describe('value/create/RegEx', () => {
     const T = Type.RegExp(/foo/, { default: 'foo' })
     Assert.IsEqual(Value.Create(T), 'foo')
   })
-  // ----------------------------------------------------------------
-  // Throw
-  // ----------------------------------------------------------------
-  it('Should throw with no default', () => {
-    const T = Type.RegExp(/foo/)
-    Assert.Throws(() => Value.Create(T))
-  })
 })

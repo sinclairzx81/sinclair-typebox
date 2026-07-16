@@ -2,6 +2,9 @@ import { Value } from '@sinclair/typebox/value'
 import { Type } from '@sinclair/typebox'
 import { Assert } from '../../assert/index'
 
+// --------------------------------------------------------
+// non-convertable pass through
+// --------------------------------------------------------
 describe('value/convert/Function', () => {
   const T = Type.Function([], Type.Any())
   it('Should passthrough 1', () => {
