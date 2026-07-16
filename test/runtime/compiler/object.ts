@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 import { Ok, Fail } from './validate'
 
-describe('compiler/Object', () => {
+describe('type/compiler/Object', () => {
   // -----------------------------------------------------
   // TypeCompiler Only
   // -----------------------------------------------------
@@ -242,6 +242,7 @@ describe('compiler/Object', () => {
       z: 3,
     })
   })
+
   it('Should validate nested schema additional properties of string', () => {
     const T = Type.Object({
       nested: Type.Object(
@@ -325,6 +326,7 @@ describe('compiler/Object', () => {
       },
     })
   })
+
   it('Should check for property key if property type is undefined', () => {
     const T = Type.Object({ x: Type.Undefined() })
     Ok(T, { x: undefined })
